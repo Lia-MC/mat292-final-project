@@ -35,24 +35,57 @@ In this model, X is mRNA, Y is a protein, and Z an inhibitor. LI(t) is light, wi
 \indent The goal of this project is to develop a computational tool that generates optimized light exposure schedules for individuals experiencing abrupt time-zone transitions. By modelling circadian rhythm dynamics using the Goodwin Oscillator Model, this tool will simulate how light exposure influences circadian phase adjustment. The optimization will minimize circadian misalignment, reduce the total required light exposure, and respect sleep windows to limit disruption. Ultimately the project aims to produce practical schedules tailored to user-specific inputs, such as flight details, to accelerate resynchronization and improve well being.
 
 \section{Objectives}
-\indent 1. Implement user interface that allows for user input about the misalignment between the user’s current and desired circadian rhythm
+\indent 1. Implement user interface that allows for user input about the misalignment between the user’s current and \\
+\indent\indent desired circadian rhythm
+
 2. Develop an improved Goodwin Oscillator Model tailored to circadian rhythms using numerical ODE solvers 
+
 3. Optimize for minimized circadian phase error and minimal total light dose
+
 4. Stimulate candidate schedules under varying parameter sets and demographic considerations 
+
 5. Visualize and analyse results by producing plots
-6. Deliver outputs including quantitative comparisons of schedules and user friendly recommendations generated with a large language model (LLM)
+
+6. Deliver outputs including quantitative comparisons of schedules and user friendly recommendations generated 
+\indent\indent with a large language model (LLM)
 
 \section{Expected Outcomes}
 \indent To account for uncertainty of changes to the user’s schedule, five sets of parameters will be generated, corresponding to the circadian periods spanning a range of 2 hours around the inputted jet lag. For each parameter set, the optimal daily light exposure in hours for one week will be calculated using the Goodwin Oscillator Model. The optimization will account for minimizing circadian phase error, limiting total light exposure, and avoiding light during sleep windows. 
 Using MATLAB and/or Python, a Goodwin Oscillator Model tailored to synchronization of circadian rhythms will be implemented to compute the recommended hours of daily light exposure for each parameter set. The computation will optimize for minimizing circadian phase error, limiting total light exposure, and avoiding light during sleep windows. Four candidate schedules will be drafted using a Large Language Model, with each schedule tailored to a demographic: children, the elderly, teenagers, and adults. For each schedule, the resynchronizing process will be simulated using the Goodwin Oscillator Model. The final outputs will include 1) phase plots, showing circadian trajectories relative to target alignment; 2) bifurcation diagrams exploring how changes in parameters affect stability of resynchronization; and 3) error plots showing decay of phase misalignment across time. These plots allow for comparison of the statistics of each schedule. The user will choose their preferred schedule, and have it as a guide to resynchronize their circadian rhythm.
 
 \section{Timeline}
-\indent The timeline of the project as of now is as follows:
+\indent The timeline of the project as of now is shown in Table 1.
 
 
-\includegraphics[scale=0.4]{timeline.png}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|c|c|p{8cm}|}
+        \hline
+        \textbf{Estimated Time of Completion} &  & \textbf{Project Milestones} \\
+        \hline
+        October & 6  & Select equations and determine model structure \\
+        \hline
+                & 13 & Draft model code \\
+        \hline
+                & 20 & Iterate model code \\
+        \hline
+                & 27 & Iterate model code \\
+        \hline
+        November & 3  & Finish the model code + Gather data using model \\
+        \hline
+                & 10 & Finish Data Analysis + Delegate sections for final report \\
+        \hline
+                & 17 & Draft final report \\
+        \hline
+                & 24 & Edit through final report \\
+        \hline
+        December & 1  & Submit \\
+        \hline
+    \end{tabular}
+    \caption{Project timeline listing milestones and estimated times of completion.}
+    \label{tab:placeholder}
+\end{table}
 
-\section{Works Cited}
 \printbibliography
 
 \end{document}
