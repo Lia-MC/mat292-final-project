@@ -1,12 +1,5 @@
 import numpy as np
 import re
-# from scipy.integrate import odeint
-# import matplotlib.pyplot as plt
-
-import logging
-logging.basicConfig(filename='my_app.log', level=logging.DEBUG)
-
-
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
