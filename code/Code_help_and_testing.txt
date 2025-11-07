@@ -1,0 +1,24 @@
+Sections (easier to navigate):
+- Lines 4-75 Human threat
+- Lines 77 to 208 Animal threat
+- Lines 211 to 239 External threats (combo of the previous two)
+- Lines 241 to 360 Resources
+- Lines 362 to 484 Environmental risk
+- Lines 487 to 567 Survival analysis
+
+
+Help:
+- Line 52 connect the amount of years to R (HumanThreat model)
+- Line 155 connect time_span to R pls (AnimalThreat model)
+- Line 211 connect time_span to R pls (analyze_external_threats)
+- Line 388 connect max_Y0 to AI (prompt given)
+- Lines 426-464 connect parameters (y0, alpha, beta, gamma, delta1, delta2, delta3, delta4) to AI (prompt given)
+- Line 529 connect years to R
+
+
+Other stuff to unite:
+- I ask for the country in like all the sections so pls unify that so that we only ask for the country once. I ask in the following sections:
+    Lines 11-13
+    Lines 56-57
+    Lines 417-418
+    Maybe more so pls check with user interface...
