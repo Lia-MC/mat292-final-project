@@ -383,8 +383,8 @@ class EnvironmentalRiskModel:
         # Worst-case inputs (all at maximum risk)
         max_natural_disaster = 1.0  # 100% disaster risk
         max_temp_difference = 5.0  # Maximum temperature anomaly
-        max_drought_risk = 5.0  # Maximum drought risk score (0-5 scale)
-        max_population_density = 22000.0  # Macau's density (~22,000 people/km²) --> Highest population density source: wikipedia
+        max_drought_risk = 1.0  # 100% drought risk
+        max_population_density = 1.0  # 100% density
         max_Y0 = 10.0  # High initial disaster frequency ############################################################################################################################### Ask AI to get this prompt below, change that 10 to the actual number
         ''' For max_Y0
         Estimate the highest monthly frequency of natural disasters in {country}. 
@@ -420,8 +420,8 @@ def get_environmental_risk_inputs():
     print(f"\nFor {country}, please provide the following risk factors:")
     natural_disaster = float(input("Natural disaster risk at https://worldpopulationreview.com/country-rankings/natural-disaster-risk-by-country (0 to 100): ")) / 100
     temp_difference = float(input("Water temperature anomaly (or closest to it) at https://www.ospo.noaa.gov/products/ocean/cb/sst5km/?product=ssta (-5 to 5): "))
-    drought_risk = float(input("Drought risk score at https://worldpopulationreview.com/country-rankings/droughts-by-country (0 to 5): "))
-    population_density = float(input("Population density per km^2 (first column) at https://worldpopulationreview.com/country-rankings/countries-by-density: "))
+    drought_risk = float(input("Drought risk score at https://worldpopulationreview.com/country-rankings/droughts-by-country (0-100): ")) / 100
+    population_density = float(input("Population density (second column) at https://worldpopulationreview.com/country-rankings/countries-by-density (0-100): ")) / 100
 
     ############################################################################################################################################################################################################### Get AI to pick alpha, beta, gamma, delta1, delta2, delta3, delta4, and Y0. Later delete the section that uses user input here (it's just for testing)
     '''
