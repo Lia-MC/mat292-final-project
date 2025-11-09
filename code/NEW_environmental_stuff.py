@@ -357,7 +357,7 @@ def resource_availability():
     return scores
 
 class EnvironmentalRiskModel:
-    def calculate_normalized_risk(self, alpha, beta, gamma, delta1, natural_disaster, delta2, temp_difference, delta3,
+    def calculate_normalized_risk(self, country, alpha, beta, gamma, delta1, natural_disaster, delta2, temp_difference, delta3,
                                   drought_risk, delta4, population_density, Y0):
         lambda_prev = Y0
         # Stabilize through iterations
@@ -382,13 +382,24 @@ class EnvironmentalRiskModel:
         max_temp_difference = 5.0  # Maximum temperature anomaly
         max_drought_risk = 5.0  # Maximum drought risk score (0-5 scale)
         max_population_density = 22000.0  # Macau's density (~22,000 people/km²) --> Highest population density source: wikipedia
-        max_Y0 = 10.0  # High initial disaster frequency ############################################################################################################################### Ask AI to get this prompt below, change that 10 to the actual number
-        ''' For max_Y0
+        
+        # LLM COMPUTES THIS
+        # max_Y0 = 10.0  # High initial disaster frequency ############################################################################################################################### Ask AI to get this prompt below, change that 10 to the actual number
+        prompt =  ''' For max_Y0
         Estimate the highest monthly frequency of natural disasters in {country}. 
         Consider disasters like: earthquakes, floods, hurricanes, wildfires.
         Return ONLY a single decimal number representing the highest amount of events in one month.
         Base this on historical data (such as the last 50 years) and geographical risk factors.
         '''
+        response = model.generate_content(prompt)
+        text_output = response.text.strip()
+        numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+        numbers_as_floats = [float(s) for s in numbers_as_strings]
+        if numbers_as_floats:
+            max_Y0 = numbers_as_floats[0]
+        else:
+            max_Y0 = 10.0 # default
+        print("max_Y0 =", max_Y0)
 
         # Calculate maximum possible risk
         lambda_prev_max = max_Y0
@@ -459,7 +470,7 @@ def get_environmental_risk_inputs(country):
 
     # Calculate normalized risk
     model = EnvironmentalRiskModel()
-    normalized_risk = model.calculate_normalized_risk(alpha, beta, gamma, delta1, natural_disaster, delta2,
+    normalized_risk = model.calculate_normalized_risk(country, alpha, beta, gamma, delta1, natural_disaster, delta2,
                                                       temp_difference, delta3, drought_risk, delta4, population_density, Y0)
 
     # Return both the normalized risk and all inputs for reference
