@@ -13,8 +13,8 @@ FIGURE OUT AGE VERSUS REMAINING YEARS -> assuming: years = R = remaining years i
 DONE - Line 52 connect the amount of years to R (HumanThreat model)
 DONE - Line 155 connect time_span to R pls (AnimalThreat model)
 DONE - Line 211 connect time_span to R pls (analyze_external_threats)
-- Line 388 connect max_Y0 to AI (prompt given)
-- Lines 426-464 connect parameters (y0, alpha, beta, gamma, delta1, delta2, delta3, delta4) to AI (prompt given)
+DONE - Line 388 connect max_Y0 to AI (prompt given)
+DONE - Lines 426-464 connect parameters (y0, alpha, beta, gamma, delta1, delta2, delta3, delta4) to AI (prompt given)
 DONE - Line 529 connect years to R
 
 

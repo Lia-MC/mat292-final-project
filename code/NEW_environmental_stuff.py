@@ -429,44 +429,205 @@ def get_environmental_risk_inputs(country):
     population_density = float(input("Population density per km^2 (first column) at https://worldpopulationreview.com/country-rankings/countries-by-density: "))
 
     ############################################################################################################################################################################################################### Get AI to pick alpha, beta, gamma, delta1, delta2, delta3, delta4, and Y0. Later delete the section that uses user input here (it's just for testing)
-    '''
-    Prompts (2 prompts):  ********************************************************************************************Note that both prompts you need to input the country
-    1) For y0 
+    # LLM COMPUTES THIS
+    # Y0         
     prompt = f"""
-        Estimate the average monthly frequency of natural disasters in {country}. 
-        Consider disasters like: earthquakes, floods, hurricanes, wildfires.
-        Return ONLY a single decimal number representing average events per month.
-        Base this on historical data and geographical risk factors.
+            Estimate the average monthly frequency of natural disasters in {country}. 
+            Consider disasters like: earthquakes, floods, hurricanes, wildfires.
+            Return ONLY a single decimal number representing average events per month.
+            Base this on historical data and geographical risk factors.
 
-        Examples:
-        Japan (high seismic+typhoon risk): 1.8-2.2
-        Philippines (high typhoon risk): 2.0-2.5  
-        USA (varied regional risks): 1.2-1.6
-        UK (low disaster risk): 0.3-0.6
+            Examples:
+            Japan (high seismic+typhoon risk): 1.8-2.2
+            Philippines (high typhoon risk): 2.0-2.5  
+            USA (varied regional risks): 1.2-1.6
+            UK (low disaster risk): 0.3-0.6
 
-        Country: {country}
-        Answer: """
-        ############### Last two lines to but the answer Ig, I don't really know how that works
+            Country: {country}
+            Answer: """
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        Y0 = numbers_as_floats[0]
+    else:
+        Y0 = 3 # default
+    print("Y0 =", Y0)
 
-    2) For the parameters (alpha, beta, gamma, and all deltas) ***********************************************************note that country is the selected country
-    Pick numerical values for the following parameters that work in the following {country}: Alpha between 0.1 and 0.5 
-    and it's the baseline safety (i.e. safety when nothing else is happening), for beta between 0.6 and 0.8 and it's 
-    recent disasters event (i.e. how much last month’s disasters affect this month’s) for gamma between 0.2 and 0.4 and 
-    it's persistent risk memory (i.e. how much the risk persists over time) for all deltas between 0.001 - 0.01, which 
-    are for how external factors affect and they are: delta1 --> natural disaster risk factor per country, delta2 --> the 
-    difference between today’s temperature and the long term average for ocean, delta3 --> the drought risk score, 
-    delta4 --> population density per country. This is all to model natural disaster risk
-    '''
+    # LLM COMPUTES THIS
+    # alpha         
+    prompt = f"""
+            Pick numerical value for the following parameters that work in the following {country}: Alpha between 0.1 and 0.5 
+            and it's the baseline safety (i.e. safety when nothing else is happening).
+            Return ONLY a single decimal number representing alpha.
+            Base this on historical data and geographical risk factors.
+            Country: {country}
+            """
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        alpha = numbers_as_floats[0]
+    else:
+        alpha = 0.3 # default
+    print("alpha =", alpha)
 
-    print(f"\nFor {country}, please provide the model parameters:")
-    alpha = float(input("Alpha (baseline safety 0.1-0.5): "))
-    beta = float(input("Beta (recent disasters effect 0.6-0.8): "))
-    gamma = float(input("Gamma (persistent risk memory 0.2-0.4): "))
-    delta1 = float(input("Delta1 (natural disaster weight 0.001-0.01): "))
-    delta2 = float(input("Delta2 (temperature weight 0.001-0.01): "))
-    delta3 = float(input("Delta3 (drought weight 0.001-0.01): "))
-    delta4 = float(input("Delta4 (population density weight 0.001-0.01): "))
-    Y0 = float(input("Initial disaster frequency (Y0): "))
+    # LLM COMPUTES THIS
+    # beta         
+    prompt = f"""
+            Pick numerical value for the following parameters that work in the following {country}: 
+            for beta between 0.6 and 0.8 and it's recent disasters event (i.e. how much last month’s disasters affect this month’s).
+            Return ONLY a single decimal number representing beta.
+            Base this on historical data and geographical risk factors.
+            Country: {country}
+            """
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        beta = numbers_as_floats[0]
+    else:
+        beta = 0.7 # default
+    print("beta =", beta)
+
+    # LLM COMPUTES THIS
+    # gamma         
+    prompt = f"""
+            Pick numerical value for the following parameters that work in the following {country}: 
+            for gamma between 0.2 and 0.4 and it's persistent risk memory (i.e. how much the risk persists over time)
+            Return ONLY a single decimal number representing gamma.
+            Base this on historical data and geographical risk factors.
+            Country: {country}
+            """
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        gamma = numbers_as_floats[0]
+    else:
+        gamma = 0.3 # default
+    print("gamma =", gamma)
+
+    # LLM COMPUTES THIS
+    # delta1         
+    prompt = f"""
+            Pick numerical value for the following parameters that work in the following {country}: 
+            for all deltas between 0.001 - 0.01, which are for how external factors affect and they are: 
+            delta1 --> natural disaster risk factor per country, 
+            Return ONLY a single decimal number representing delta1.
+            Base this on historical data and geographical risk factors.
+            Country: {country}
+            """
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        delta1 = numbers_as_floats[0]
+    else:
+        delta1 = 0.0055 # default for all deltas
+    print("delta1 =", delta1)
+
+    # LLM COMPUTES THIS
+    # delta2         
+    prompt = f"""
+            Pick numerical value for the following parameters that work in the following {country}: 
+            for all deltas between 0.001 - 0.01, which are for how external factors affect and they are: 
+            delta2 --> the difference between today's temperature and the long term average for ocean, 
+            Return ONLY a single decimal number representing delta2.
+            Base this on historical data and geographical risk factors.
+            Country: {country}
+            """
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        delta2 = numbers_as_floats[0]
+    else:
+        delta2 = 0.0055 # default for all deltas
+    print("delta2 =", delta2)
+
+    # LLM COMPUTES THIS
+    # delta3         
+    prompt = f"""
+            Pick numerical value for the following parameters that work in the following {country}: 
+            for all deltas between 0.001 - 0.01, which are for how external factors affect and they are: 
+            delta3 --> the drought risk score for {country}
+            Return ONLY a single decimal number representing delta3.
+            Base this on historical data and geographical risk factors.
+            """
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        delta3 = numbers_as_floats[0]
+    else:
+        delta3 = 0.0055 # default for all deltas
+    print("delta3 =", delta3)
+
+    # LLM COMPUTES THIS
+    # delta4         
+    prompt = f"""
+            Pick numerical value for the following parameters that work in the following {country}: 
+            for all deltas between 0.001 - 0.01, which are for how external factors affect and they are: 
+            delta4 --> population density of country: {country}. 
+            Return ONLY a single decimal number representing delta4.
+            Base this on historical data and geographical risk factors.
+            """
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        delta4 = numbers_as_floats[0]
+    else:
+        delta4 = 0.0055 # default for all deltas
+    print("delta4 =", delta4)
+
+    # '''
+    # Prompts (2 prompts):  ********************************************************************************************Note that both prompts you need to input the country
+    # 1) For y0 
+    # prompt = f"""
+    #     Estimate the average monthly frequency of natural disasters in {country}. 
+    #     Consider disasters like: earthquakes, floods, hurricanes, wildfires.
+    #     Return ONLY a single decimal number representing average events per month.
+    #     Base this on historical data and geographical risk factors.
+
+    #     Examples:
+    #     Japan (high seismic+typhoon risk): 1.8-2.2
+    #     Philippines (high typhoon risk): 2.0-2.5  
+    #     USA (varied regional risks): 1.2-1.6
+    #     UK (low disaster risk): 0.3-0.6
+
+    #     Country: {country}
+    #     Answer: """
+    #     ############### Last two lines to but the answer Ig, I don't really know how that works
+
+    # 2) For the parameters (alpha, beta, gamma, and all deltas) ***********************************************************note that country is the selected country
+    # Pick numerical values for the following parameters that work in the following {country}: Alpha between 0.1 and 0.5 
+    # and it's the baseline safety (i.e. safety when nothing else is happening), for beta between 0.6 and 0.8 and it's 
+    # recent disasters event (i.e. how much last month’s disasters affect this month’s) for gamma between 0.2 and 0.4 and 
+    # it's persistent risk memory (i.e. how much the risk persists over time) for all deltas between 0.001 - 0.01, which 
+    # are for how external factors affect and they are: delta1 --> natural disaster risk factor per country, delta2 --> the 
+    # difference between today’s temperature and the long term average for ocean, delta3 --> the drought risk score, 
+    # delta4 --> population density per country. This is all to model natural disaster risk
+    # '''
+
+    # print(f"\nFor {country}, please provide the model parameters:")
+    # alpha = float(input("Alpha (baseline safety 0.1-0.5): "))
+    # beta = float(input("Beta (recent disasters effect 0.6-0.8): "))
+    # gamma = float(input("Gamma (persistent risk memory 0.2-0.4): "))
+    # delta1 = float(input("Delta1 (natural disaster weight 0.001-0.01): "))
+    # delta2 = float(input("Delta2 (temperature weight 0.001-0.01): "))
+    # delta3 = float(input("Delta3 (drought weight 0.001-0.01): "))
+    # delta4 = float(input("Delta4 (population density weight 0.001-0.01): "))
+    # Y0 = float(input("Initial disaster frequency (Y0): "))
 
     # Calculate normalized risk
     model = EnvironmentalRiskModel()
