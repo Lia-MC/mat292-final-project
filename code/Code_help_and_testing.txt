@@ -8,17 +8,21 @@ Sections (easier to navigate):
 
 
 Help:
-- Line 52 connect the amount of years to R (HumanThreat model)
-- Line 155 connect time_span to R pls (AnimalThreat model)
-- Line 211 connect time_span to R pls (analyze_external_threats)
+
+FIGURE OUT AGE VERSUS REMAINING YEARS -> assuming: years = R = remaining years instead of age
+DONE - Line 52 connect the amount of years to R (HumanThreat model)
+DONE - Line 155 connect time_span to R pls (AnimalThreat model)
+DONE - Line 211 connect time_span to R pls (analyze_external_threats)
 - Line 388 connect max_Y0 to AI (prompt given)
 - Lines 426-464 connect parameters (y0, alpha, beta, gamma, delta1, delta2, delta3, delta4) to AI (prompt given)
-- Line 529 connect years to R
+DONE - Line 529 connect years to R
 
 
+DONE:
 Other stuff to unite:
 - I ask for the country in like all the sections so pls unify that so that we only ask for the country once. I ask in the following sections:
-    Lines 11-13
-    Lines 56-57
-    Lines 417-418
-    Maybe more so pls check with user interface...
+    removed Lines 11-13 
+    removed Lines 56-57  
+    removed Lines 417-418
+    added Line 525
+    checked, no more - Maybe more so pls check with user interface...
