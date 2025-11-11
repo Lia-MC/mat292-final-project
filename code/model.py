@@ -266,6 +266,7 @@ baseline_hazards = {
 }
 
 def age():
+    global model
     curage = int(input("What is your current age? "))
 
     for country in countries:
@@ -800,6 +801,7 @@ def resource_availability():
     return scores
 
 class EnvironmentalRiskModel:
+    global model
     def calculate_normalized_risk(self, country, alpha, beta, gamma, delta1, natural_disaster, delta2, temp_difference, delta3,
                                   drought_risk, delta4, population_density, Y0):
         lambda_prev = Y0
@@ -1072,10 +1074,14 @@ def get_environmental_risk_inputs(country):
     # delta4 = float(input("Delta4 (population density weight 0.001-0.01): "))
     # Y0 = float(input("Initial disaster frequency (Y0): "))
 
-    # Calculate normalized risk
-    model = EnvironmentalRiskModel()
-    normalized_risk = model.calculate_normalized_risk(country, alpha, beta, gamma, delta1, natural_disaster, delta2,
-                                                      temp_difference, delta3, drought_risk, delta4, population_density, Y0)
+        # Calculate normalized risk — do NOT shadow the LLM client name `model`
+    env_model = EnvironmentalRiskModel()
+    normalized_risk = env_model.calculate_normalized_risk(
+        country, alpha, beta, gamma,
+        delta1, natural_disaster, delta2, temp_difference,
+        delta3, drought_risk, delta4, population_density, Y0
+    )
+
 
     # Return both the normalized risk and all inputs for reference
     return {
