@@ -1189,3 +1189,5 @@ if __name__ == "__main__":
     # AGE = age()[0]
     REMAINING = age()[1]
     results = run_complete_survival_analysis(REMAINING)
+    tasdf = REMAINING * results['total_survival']
+    print(f"\nEstimated Remaining Survival Years: {tasdf:.2f} years")
