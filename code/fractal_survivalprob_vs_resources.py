@@ -1,3 +1,9 @@
+'''
+Generates a cool thing. The x-axis shows combined external threat risk (from 0 to 1), the y-axis is the resource 
+score (-5 to +5), and the color is the survival probability after simulating for 80 years.
+'''
+
+
 import numpy as np
 import re
 import os
@@ -1184,9 +1190,41 @@ def run_complete_survival_analysis(REMAINING):
         'country': external_results['country']
     }
 
-if __name__ == "__main__":
-    # AGE = age()[0]
-    REMAINING = age()[1]
-    results = run_complete_survival_analysis(REMAINING)
-    tasdf = REMAINING * results['total_survival']
-    print(f"\nEstimated Remaining Survival Years: {tasdf:.2f} years")
+import numpy as np
+import matplotlib.pyplot as plt
+
+# -- Use your model's total survival calculator --
+def calculate_total_survival(external_combined_risk, resource_score, environmental_risk,
+                             weights=[0.25, 0.375, 0.375], risk_threshold=0.5, k=8):
+    S_external = 1 - external_combined_risk
+    S_resources = max(0, min(1, (resource_score + 5) / 10))  # resource_score -5 to +5 normed
+    S_environment = 1 / (1 + np.exp(k * (environmental_risk - risk_threshold)))
+    total_survival = (weights[0] * S_external +
+                      weights[1] * S_resources +
+                      weights[2] * S_environment)
+    return max(0, min(1, total_survival))
+
+# ----- Fractal image generation -----
+N = 400  # image size, more for higher resolution
+
+xs = np.linspace(0, 1, N)     # external_combined_risk (human+animal risk)
+ys = np.linspace(-5, 5, N)    # resource score (range from very poor to very rich)
+zs = np.linspace(0, 1, N)     # environmental risk (0=safe, 1=dangerous)
+
+# Generate grid for fractal landscape: pixel colors = total_survival
+fractal_img = np.zeros((N, N, 3))  # RGB
+
+for i, ext in enumerate(xs):
+    for j, res in enumerate(ys):
+        env = zs[(i+j)%N]  # Creates interesting diagonal/color patterns 
+        surv = calculate_total_survival(ext, res, env)
+        # Color maps: blue = safe, yellow = moderate, red = dangerous
+        color = plt.cm.plasma(surv)   # You can experiment with other colormaps
+        fractal_img[j, i, :] = color[:3]
+
+im = plt.imshow(fractal_img, origin="lower", extent=[0,1,-5,5])
+plt.xlabel("Combined External Threat Risk (0=safe, 1=dangerous)")
+plt.ylabel("Resource Score (-5=none, +5=max)")
+plt.title("Fractal Landscape of Survival Probability")
+plt.colorbar(im, label="Survival Probability")
+plt.show()

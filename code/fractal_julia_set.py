@@ -1,3 +1,21 @@
+'''
+Each pixel in the image represents one simulated survival scenario with specific values for risk, resource availability, 
+and environmental risk.
+The color shows the survival probability as calculated by my model for those parameters, using the "plasma" 
+colormap (see colorbar on the right)
+
+
+This is AI explanation:
+"The Julia Survival Fractal Pattern image visually represents the outputs of my survival probability model over 
+a multidimensional parameter space. Each pixel uses the mathematics of Julia set fractals to generate test values 
+for external risk, resource score, and environmental risk, which are then run through the survival model. The 
+resulting survival probability is mapped to color, revealing how survival likelihood changes across these complex 
+scenarios. The fractal boundaries show regions of rapid transition, where the model is especially sensitive to input changes."
+
+Note: You cannot map the x and y axes directly to specific parameters since the Julia set generates complex stuff
+'''
+
+
 import numpy as np
 import re
 import os
@@ -1184,9 +1202,53 @@ def run_complete_survival_analysis(REMAINING):
         'country': external_results['country']
     }
 
-if __name__ == "__main__":
-    # AGE = age()[0]
-    REMAINING = age()[1]
-    results = run_complete_survival_analysis(REMAINING)
-    tasdf = REMAINING * results['total_survival']
-    print(f"\nEstimated Remaining Survival Years: {tasdf:.2f} years")
+import numpy as np
+import matplotlib.pyplot as plt
+
+def calculate_total_survival(external_combined_risk, resource_score, environmental_risk,
+                             weights=[0.25, 0.375, 0.375], risk_threshold=0.5, k=8):
+    """
+    Calculate normalized total survival probability (0-1)
+    external_combined_risk: combined human + animal risk (0-1)
+    resource_score: -5 to +5
+    environmental_risk: 0-1
+    """
+    S_external = 1 - external_combined_risk
+    S_resources = max(0, min(1, (resource_score + 5) / 10))
+    S_environment = 1 / (1 + np.exp(k * (environmental_risk - risk_threshold)))
+    total_survival = (weights[0] * S_external +
+                      weights[1] * S_resources +
+                      weights[2] * S_environment)
+    return max(0, min(1, total_survival))
+
+
+# -- Julia set config --
+N = 600
+x = np.linspace(-1.5, 1.5, N)
+y = np.linspace(-1.5, 1.5, N)
+X, Y = np.meshgrid(x, y)
+Z = X + 1j * Y
+# Julia constant
+c = -0.8 + 0.156j
+
+img = np.zeros((N, N))
+for i in range(N):
+    for j in range(N):
+        z = Z[i,j]
+        steps = 0
+        # Standard Julia set iteration
+        while abs(z) < 2 and steps < 60:
+            z = z**2 + c
+            steps += 1
+        # Use fractal values to 'simulate': escape speed ~ risk, etc
+        # Here’s an example mapping:
+        risk = min(1, steps / 60)                # risk grows with slower escape
+        resource = np.cos(z.real) * 2 + 2        # use real part for variety, scale to roughly -2..+6
+        environment = abs(np.sin(z.imag))        # use imag part (0..1)
+        img[i,j] = calculate_total_survival(risk, resource, environment)
+
+plt.imshow(img, cmap="plasma", extent=[-1.5,1.5,-1.5,1.5])
+plt.title("Julia Survival Fractal Pattern (Color = Model Survival Probability)")
+plt.colorbar(label='Survival Probability')
+plt.axis('off')
+plt.show()

@@ -1,3 +1,49 @@
+'''
+AI explanation:
+“This fractal tree visually represents many possible survival outcomes as modeled by our risk/resource/environment 
+framework. Individual branches are colored to show survival probability for the specific scenario at that split, 
+from high (yellow/orange) to low (dark purple). As the tree branches, arbitrarily varied combinations of risk, resource, 
+and environmental threat are simulated, illustrating how survival likelihoods evolve and propagate. The pattern highlights 
+how subtle variations in conditions and decisions can create a wide diversity of survival outcomes.”
+
+
+More explanation:
+This image is a fractal tree, created by recursively drawing branches that split and shrink as the depth increases.
+Unlike a plain fractal tree, each branch is colored according to the output of your survival probability model, given 
+certain values for external risk, resources, and environmental risk.
+
+At each branch:
+The code randomly varies the inputs for:
+external_combined_risk (risk from threats)
+resource_score (how available resources are)
+environmental_risk (natural/environmental threats)
+For that branch, it calculates:
+survival_prob = calculate_total_survival(risk, resource, environment)
+The color of the branch (using matplotlib’s “inferno” colormap) is set by survival_prob:
+Yellow/Orange = High survival probability (safer scenario)
+Dark Purple = Low survival probability (riskier, less survivable)
+Branch length (and sometimes angle) may weakly depend on resource/parameter changes for visual flair.
+
+As the tree grows:
+Each split randomly nudges risk/resource/env values, simulating how possible “life scenarios” 
+could branch out from a starting point.
+
+The tree shows a "forest" of possible future scenarios:
+The thick, bright branches at the bottom represent “baseline” or median scenarios with good survival chances.
+As you move toward the tips: branches split, and parameter combinations become more varied, sometimes resulting in 
+lower survival probabilities (dark/thin branches).
+
+You are visually exploring your model’s output space:
+Safe scenarios (high probability) are more "central," riskier outcomes are at the edges/tips.
+The self-similar branching structure mirrors how small changes at each life decision or environmental 
+condition can influence survival.
+
+No explicit axes:
+The geometry is a visualization, not a coordinate map. Instead, interpret color and branch thickness as representing your model's output for a rich set of simulated inputs.
+
+'''
+
+
 import numpy as np
 import re
 import os
@@ -1184,9 +1230,34 @@ def run_complete_survival_analysis(REMAINING):
         'country': external_results['country']
     }
 
-if __name__ == "__main__":
-    # AGE = age()[0]
-    REMAINING = age()[1]
-    results = run_complete_survival_analysis(REMAINING)
-    tasdf = REMAINING * results['total_survival']
-    print(f"\nEstimated Remaining Survival Years: {tasdf:.2f} years")
+import numpy as np
+import matplotlib.pyplot as plt
+
+def calculate_total_survival(external_combined_risk, resource_score, environmental_risk,
+                             weights=[0.25,0.375,0.375], risk_threshold=0.5, k=8):
+    S_external = 1 - external_combined_risk
+    S_resources = max(0, min(1, (resource_score + 5) / 10))
+    S_environment = 1 / (1 + np.exp(k*(environmental_risk - risk_threshold)))
+    total_survival = (weights[0]*S_external + weights[1]*S_resources + weights[2]*S_environment)
+    return max(0, min(1, total_survival))
+
+def fractal_tree(ax, x, y, angle, depth, risk, resource, env):
+    if depth == 0: return
+    length = 0.8 + resource*0.1
+    color = plt.cm.inferno(calculate_total_survival(risk, resource, env))
+    x2, y2 = x + length*np.cos(angle), y + length*np.sin(angle)
+    ax.plot([x,x2],[y,y2],color=color,lw=depth*0.7)
+    # Randomize parameters for branches
+    nresource = np.clip(resource + np.random.uniform(-2,1),-5,5)
+    nrisk = np.clip(risk + np.random.uniform(-0.2,0.2),0,1)
+    nenv = np.clip(env + np.random.uniform(-0.2,0.2),0,1)
+    # Left
+    fractal_tree(ax, x2, y2, angle-np.pi/8, depth-1, nrisk, nresource, nenv)
+    # Right
+    fractal_tree(ax, x2, y2, angle+np.pi/8, depth-1, nrisk, nresource, nenv)
+
+fig, ax = plt.subplots(figsize=(9,10))
+fractal_tree(ax, 0, 0, np.pi/2, 11, risk=0.15, resource=3.0, env=0.2)
+plt.axis('off')
+plt.title("Fractal Tree of Survival Probability")
+plt.show()
