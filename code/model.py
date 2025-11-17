@@ -1184,6 +1184,102 @@ def run_complete_survival_analysis(REMAINING):
         'country': external_results['country']
     }
 
+def run_individual_model(user_inputs):
+    """
+    Non-interactive version of the age() logic.
+    Reads values from user_inputs instead of calling input().
+    Returns time series for R(t), H(t) and the predicted lifespan.
+    """
+
+    A0 = int(user_inputs["age"])
+    country_name = user_inputs["country"]
+
+    if country_name not in countries:
+        raise ValueError(f"Country '{country_name}' not found in countries dict.")
+
+    # Country-based life expectancy → remaining years
+    L_max = countries[country_name][1]
+    R0 = L_max - A0
+
+    # Individual parameters (use passed values, otherwise defaults)
+    s = float(user_inputs.get("s", 0.5))       # disease severity
+    a = float(user_inputs.get("a", 0.5))       # activity
+    m = float(user_inputs.get("m", 0.5))       # metabolic risk
+    delta_w = float(user_inputs.get("delta_w", 0.0))
+    H0 = float(user_inputs.get("H0", 0.9))
+
+    # Baseline hazard interpolation
+    keys = sorted(baseline_hazards.keys())
+    if A0 <= keys[0]:
+        h0 = baseline_hazards[keys[0]]
+    elif A0 >= keys[-1]:
+        h0 = baseline_hazards[keys[-1]]
+    else:
+        for i in range(len(keys) - 1):
+            x1, x2 = keys[i], keys[i + 1]
+            if x1 <= A0 <= x2:
+                y1, y2 = baseline_hazards[x1], baseline_hazards[x2]
+                h0 = y1 + (A0 - x1) * (y2 - y1) / (x2 - x1)
+                break
+
+    # Coefficients (same as in age())
+    k_s = 1.0
+    k_a = 0.5
+    k_w = 0.25
+    k_m = 0.5
+    k_g = 0.06
+    k_h = 2.0
+
+    def derivatives(y, t):
+        R, H = y
+        age = A0 + t
+        dH_dt = - (k_s * s + k_w * delta_w + k_m * m) * H + k_a * a * (1 - H)
+        hazard = h0 * np.exp(k_g * (age - A0))
+        dR_dt = - R * hazard * (1.0 + k_h * (1.0 - H))
+        return np.array([dR_dt, dH_dt])
+
+    def rk4_system(f, y0, t):
+        y = np.zeros((len(t), len(y0)))
+        y[0, :] = y0
+        for i in range(1, len(t)):
+            dt = t[i] - t[i - 1]
+            k1 = f(y[i - 1, :], t[i - 1])
+            k2 = f(y[i - 1, :] + 0.5 * dt * k1, t[i - 1] + 0.5 * dt)
+            k3 = f(y[i - 1, :] + 0.5 * dt * k2, t[i - 1] + 0.5 * dt)
+            k4 = f(y[i - 1, :] + dt * k3, t[i - 1] + dt)
+            y[i, :] = y[i - 1, :] + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+            y[i, 1] = np.clip(y[i, 1], 0.0, 1.0)
+            y[i, 0] = max(y[i, 0], 0.0)
+        return y
+
+    # Simulate 80 years into the future
+    t_end = 80.0
+    n_steps = 4000
+    t = np.linspace(0.0, t_end, n_steps)
+
+    y0 = np.array([R0, H0])
+    sol = rk4_system(derivatives, y0, t)
+    R_sol = sol[:, 0]
+    H_sol = sol[:, 1]
+
+    final_R = R_sol[-1]
+    predicted_lifespan = A0 + R0 - final_R
+
+    return {
+        "t": t,
+        "R_t": R_sol,
+        "H_t": H_sol,
+        "predicted_lifespan": predicted_lifespan,
+        "params": {
+            "s": s, "a": a, "m": m,
+            "delta_w": delta_w,
+            "H0": H0,
+            "A0": A0,
+            "L_max": L_max
+        }
+    }
+
+
 if __name__ == "__main__":
     # AGE = age()[0]
     REMAINING = age()[1]
