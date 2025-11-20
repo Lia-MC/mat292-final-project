@@ -5,7 +5,8 @@ There are many files in this repository. Each key file has a separate set of ins
 To run or read any of our code, please first follow the steps below:
 1. Clone the repository
 2. Generate an API key at https://aistudio.google.com/app/api-keys
-3. Locally make a .env file and write GOOGLE_API_KEY = {fill this in with your API key, remove curly braces}
+3. Navigate to the code folder. This is where all relevant, updated code is stored.
+4. Locally make a .env file and write GOOGLE_API_KEY = {fill this in with your API key, remove curly braces}
 
 (WARNING: If at any point there is an error that you have run out of API credits, please generate a new API key and rerun our program. We recomend generating a new API key for every run, to prevent it running out in the middle of a trial.)
 
