@@ -499,11 +499,22 @@ def calculate_total_survival(external_combined_risk, resource_scores, environmen
     # 1. External threats survival (inverse of combined human + animal risk)
     S_external = 1 - external_combined_risk
 
-    # 2. Resource availability (normalize -5 to +5 → 0 to 1)
-    resource_keys = ['water', 'food', 'medical', 'shelter', 'economic']
-    resource_values = [resource_scores[key] for key in resource_keys if key in resource_scores]
-    resource_sum = sum(resource_values)
-    S_resources = max(0, min(1, (resource_sum + 5) / 10))
+    # 2. Resource availability with weighted importance
+    resource_weights = {
+        'water': 0.30,      # 30%
+        'food': 0.25,       # 25% 
+        'medical': 0.15,    # 15%
+        'shelter': 0.20,    # 20%
+        'economic': 0.10    # 10%
+    }
+
+    # Calculate weighted resource score
+    weighted_resource_sum = 0
+    for resource, weight in resource_weights.items():
+        weighted_resource_sum += resource_scores[resource] * weight
+
+    # Normalize from [-1, +1] range to [0, 1] range
+    S_resources = max(0, min(1, (weighted_resource_sum + 1) / 2))
 
     # 3. Environmental risk survival
     S_environment = 1 / (1 + np.exp(k * (environmental_risk - risk_threshold)))
