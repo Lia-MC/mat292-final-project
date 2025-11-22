@@ -356,7 +356,7 @@ else:
 print("H0 =", H0)
 
 # Parameters
-A0 = 30.0         # current age
+A0 = curage         # current age
 R0 = L_max - A0   # initial remaining years
 
 # baseline hazard at age A0 -> look it up
