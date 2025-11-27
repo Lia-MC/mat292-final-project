@@ -265,180 +265,189 @@ baseline_hazards = {
     108: 0.805
 }
 
-# get user inputs and initial processing of user inputs
+def age():
+    global model
+    curage = int(input("What is your current age? "))
 
-curage = int(input("What is your current age? "))
+    for country in countries:
+        index = countries[country][0]
+        print(f"{index}. {country}")
 
-for country in countries:
-    index = countries[country][0]
-    print(f"{index}. {country}")
+    countryindex = [-1]
+    while countryindex[-1] != 0:
+        choice = int(input("Select the number corresponding to your country (0 to finish): "))
+        countryindex.append(choice)
 
-countryindex = [-1]
-while countryindex[-1] != 0:
-    choice = int(input("Select the number corresponding to your country (0 to finish): "))
-    countryindex.append(choice)
-
-Lmax = 0.0
-numcountries = 0
-# Find corresponding Lmax values
-for idx in countryindex[1:]:
-    if idx == 0:
-        break
-    for country, values in countries.items():
-        if values[0] == idx:
-            Lmax += values[1]
-            numcountries += 1
-
-L_max = Lmax / numcountries 
-
-# medical conditions severity
-# LLM COMPUTES THIS
-# s = (0, 1) # pick value between these based on user inputs
-users = input("List any medical conditions you have and their severity for each one: ")
-prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO s, NO NUMBERS. Based on the following user medical conditions and their severity, compute an overall disease severity score between 0 and 1, where 0 means no conditions and 1 means extremely severe conditions: " + users
-response = model.generate_content(prompt)
-text_output = response.text.strip()
-numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
-numbers_as_floats = [float(s) for s in numbers_as_strings]
-if numbers_as_floats:
-    s = numbers_as_floats[0]
-else:
-    s = 0.5
-print("s =", s)
-
-# activity levels
-# LLM COMPUTES THIS
-# a = (0, 1) # pick value between these based on user inputs
-usera = input("Describe your typical weekly physical activity levels: ")
-prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO a, NO NUMBERS. Based on the following user description of their typical weekly physical activity levels, compute an activity score between 0 and 1, where 0 means no activity and 1 means extremely active: " + usera
-response = model.generate_content(prompt)
-text_output = response.text.strip()
-numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
-numbers_as_floats = [float(s) for s in numbers_as_strings]
-if numbers_as_floats:
-    a = numbers_as_floats[0]
-else:
-    a = 0.5
-print("a =", a)
-
-# WHR stuff
-w = float(input("Enter your waist to hip ratio: "))
-wopt = 0.875 # average optimal whr for all people
-delta_w = w - wopt
-
-# metabolic risk score
-# LLM COMPUTES THIS
-# m = (0, 1) # pick value between these based on user inputs
-userm = input("Provide any relevant metabolic health information (e.g., blood pressure, cholesterol, blood sugar levels): ")
-prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO m, NO NUMBERS. Based on the following user metabolic health information, compute a metabolic risk score between 0 and 1, where 0 means no metabolic risk and 1 means extremely high metabolic risk: " + userm
-response = model.generate_content(prompt)
-text_output = response.text.strip()
-numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
-numbers_as_floats = [float(s) for s in numbers_as_strings]
-if numbers_as_floats:
-    m = numbers_as_floats[0]
-else:
-    m = 0.5
-print("m =", m)
-
-# LLM COMPUTES THIS
-# H0 = 0.9          # initial health index (0..1) 
-userh = input("Provide any additional information about your current health status: ")
-prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO H0, NO NUMBERS. Based on the following user overall assessment of their current health status, compute an initial health index between 0 and 1, where 0 means very poor health and 1 means excellent health: " + users + usera + userm + userh
-response = model.generate_content(prompt)
-text_output = response.text.strip()
-numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
-numbers_as_floats = [float(s) for s in numbers_as_strings]
-if numbers_as_floats:
-    H0 = numbers_as_floats[0]
-else:
-    H0 = 0.9 # default
-print("H0 =", H0)
-
-# Parameters
-A0 = curage         # current age
-R0 = L_max - A0   # initial remaining years
-
-# baseline hazard at age A0 -> look it up
-# Sort keys to make sure we can find the interval
-keys = sorted(baseline_hazards.keys())
-
-# If below the minimum or above the maximum, clamp
-if A0 <= keys[0]:
-    h0 = baseline_hazards[keys[0]]
-elif A0 >= keys[-1]:
-    h0 = baseline_hazards[keys[-1]]
-else:
-    # Find the two nearest keys around A0
-    for i in range(len(keys) - 1):
-        x1, x2 = keys[i], keys[i + 1]
-        if x1 <= A0 <= x2:
-            y1, y2 = baseline_hazards[x1], baseline_hazards[x2]
-            # Linear interpolation formula
-            h0 = y1 + (A0 - x1) * (y2 - y1) / (x2 - x1)
+    Lmax = 0.0
+    numcountries = 0
+    # find corresponding Lmax values for each countries
+    for idx in countryindex[1:]:
+        if idx == 0:
             break
+        for country, values in countries.items():
+            if values[0] == idx:
+                Lmax += values[1]
+                numcountries += 1
 
-# Health dynamics coefficients
-# decay toward 0 if risk present; activity moves H toward 1
-# calibrate based on data
-k_s = 1 # 0.5 to 5 
-k_a = 0.5 # 0.2 to 1
-k_w = 0.25 # 0.1 to 0.5
-k_m = 0.5 # 0.2 to 1
+    L_max = Lmax / numcountries 
 
-# Gompertz hazard params
-# calibrate based on data
-k_g = 0.06          # rate hazard increases with age
+    # medical conditions severity
+    # LLM COMPUTES THIS
+    # s = (0, 1) # pick value between these based on user inputs
+    users = input("List any medical conditions you have and their severity for each one: ")
+    prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO s, NO NUMBERS. Based on the following user medical conditions and their severity, compute an overall disease severity score between 0 and 1, where 0 means no conditions and 1 means extremely severe conditions: " + users
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        s = numbers_as_floats[0]
+        s = max(0, min(s, 1))
+    else:
+        s = 0.5 # default
+    print("s =", s)
 
-# sensitivity of mortality to poor health
-# calibrate based on data
-k_h = 2.0
+    # activity levels
+    # LLM COMPUTES THIS
+    # a = (0, 1) # pick value between these based on user inputs
+    usera = input("Describe your typical weekly physical activity levels: ")
+    prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO a, NO NUMBERS. Based on the following user description of their typical weekly physical activity levels, compute an activity score between 0 and 1, where 0 means no activity and 1 means extremely active: " + usera
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        a = numbers_as_floats[0]
+        a = max(0, min(a, 1))
+    else:
+        a = 0.5 # default
+    print("a =", a)
 
-# Define derivatives for the system y = [R, H]
-def derivatives(y, t):
-    R, H = y
+    # WHR stuff
+    w = float(input("Enter your waist to hip ratio: "))
+    wopt = 0.875 # average optimal whr for all people
+    delta_w = w - wopt
+
+    # metabolic risk score
+    # LLM COMPUTES THIS
+    # m = (0, 1) # pick value between these based on user inputs
+    userm = input("Provide any relevant metabolic health information (e.g., blood pressure, cholesterol, blood sugar levels): ")
+    prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO m, NO NUMBERS. Based on the following user metabolic health information, compute a metabolic risk score between 0 and 1, where 0 means no metabolic risk and 1 means extremely high metabolic risk: " + userm
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        m = numbers_as_floats[0]
+        m = max(0, min(m, 1))
+    else:
+        m = 0.5 # default
+    print("m =", m)
+
+    # initial health index 
+    # LLM COMPUTES THIS
+    # H0 = 0.9          
+    # h0 (0, 1) # pick value between these based on user inputs
+    userh = input("Provide any additional information about your current health status: ")
+    prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO H0, NO NUMBERS. Based on the following user overall assessment of their current health status, compute an initial health index between 0 and 1, where 0 means very poor health and 1 means excellent health: " + users + usera + userm + userh
+    response = model.generate_content(prompt)
+    text_output = response.text.strip()
+    numbers_as_strings = re.findall(r'\d+\.?\d*', text_output)
+    numbers_as_floats = [float(s) for s in numbers_as_strings]
+    if numbers_as_floats:
+        H0 = numbers_as_floats[0]
+        H0 = max(0, min(H0, 1))
+    else:
+        H0 = 0.9 # default
+    print("H0 =", H0)
+
+    # other parameters
+    A0 = curage # current age
+    R0 = L_max - A0 # initial remaining years
+
+    # sort keys to make sure we can find interval
+    keys = sorted(baseline_hazards.keys())
+
+    # quick algorithm to find h0 at age A0 via linear interpolation
+    if A0 <= keys[0]:
+        h0 = baseline_hazards[keys[0]]
+    elif A0 >= keys[-1]:
+        h0 = baseline_hazards[keys[-1]]
+    else:
+        for i in range(len(keys) - 1):
+            x1, x2 = keys[i], keys[i + 1]
+            if x1 <= A0 <= x2:
+                y1, y2 = baseline_hazards[x1], baseline_hazards[x2]
+                # linear interpolation formula:
+                h0 = y1 + (A0 - x1) * (y2 - y1) / (x2 - x1)
+                break
+
+    # health dynamics coefficients
+    # calibrated based on data
+    k_s = 1 # 0.5 to 5 
+    k_a = 0.5 # 0.2 to 1
+    k_w = 0.25 # 0.1 to 0.5
+    k_m = 0.5 # 0.2 to 1
+
+    # gompertz hazard params
+    # calibrated based on data
+    k_g = 0.06 # because rate hazard increases with age
+
+    # sensitivity of mortality to poor health
+    # calibrated based on data
+    k_h = 2.0
+
+    # define derivatives for the system y = [R, H]
+    def derivatives(y, t):
+        R, H = y
+        age = A0 + t
+        # health ODE
+        dH_dt = - (k_s * s + k_w * delta_w + k_m * m) * H + k_a * a * (1 - H)
+        # gompertz hazard equation
+        hazard = h0 * np.exp(k_g * (age - A0))
+        # R ODE
+        dR_dt = - R * hazard * (1.0 + k_h * (1.0 - H))
+        return np.array([dR_dt, dH_dt])
+
+    # RK4 algorithm for system of ODEs
+    def rk4_system(f, y0, t):
+        y = np.zeros((len(t), len(y0)))
+        y[0,:] = y0
+        for i in range(1, len(t)):
+            dt = t[i] - t[i-1]
+            k1 = f(y[i-1,:], t[i-1])
+            k2 = f(y[i-1,:] + 0.5*dt*k1, t[i-1] + 0.5*dt)
+            k3 = f(y[i-1,:] + 0.5*dt*k2, t[i-1] + 0.5*dt)
+            k4 = f(y[i-1,:] + dt*k3, t[i-1] + dt)
+            y[i,:] = y[i-1,:] + (dt/6.0)*(k1 + 2*k2 + 2*k3 + k4)
+            y[i,1] = np.clip(y[i,1], 0.0, 1.0)
+            y[i,0] = max(y[i,0], 0.0)
+        return y
+
+    # run simulation
+    t_end = L_max # simulate up to max age user can be (based on earlier calculations of L_max)
+    n_steps = 4000
+    t = np.linspace(0.0, t_end, n_steps)
+
+    y0 = np.array([R0, H0])
+    sol = rk4_system(derivatives, y0, t)
+    R_sol = sol[:,0]
+    H_sol = sol[:,1]
     age = A0 + t
-    # health ODE: simple linear form pushing H down with risk, up with activity
-    dH_dt = - (k_s * s + k_w * delta_w + k_m * m) * H + k_a * a * (1 - H)
-    # Gompertz hazard (age-dependent)
-    hazard = h0 * np.exp(k_g * (age - A0))
-    # R ODE: proportional to R times hazard, amplified when H is low
-    dR_dt = - R * hazard * (1.0 + k_h * (1.0 - H))
-    return np.array([dR_dt, dH_dt])
 
-# RK4 integrator for systems
-def rk4_system(f, y0, t):
-    y = np.zeros((len(t), len(y0)))
-    y[0,:] = y0
-    for i in range(1, len(t)):
-        dt = t[i] - t[i-1]
-        k1 = f(y[i-1,:], t[i-1])
-        k2 = f(y[i-1,:] + 0.5*dt*k1, t[i-1] + 0.5*dt)
-        k3 = f(y[i-1,:] + 0.5*dt*k2, t[i-1] + 0.5*dt)
-        k4 = f(y[i-1,:] + dt*k3, t[i-1] + dt)
-        y[i,:] = y[i-1,:] + (dt/6.0)*(k1 + 2*k2 + 2*k3 + k4)
-        y[i,1] = np.clip(y[i,1], 0.0, 1.0) # keep H within [0,1] and R nonnegative
-        y[i,0] = max(y[i,0], 0.0)
-    return y
+    # remaining life expectancy estimate: when R approaches zero
+    final_R = R_sol[-1]
+    predicted_lifespan = A0 + R0 - final_R
 
-# Run simulation
-t_end = 80.0  # years forward to simulate (e.g., up to age A0 + 80)
-n_steps = 4000
-t = np.linspace(0.0, t_end, n_steps)
+    # RESULTS (commented out some of the less relevant ones)
+    print("\nSimulation Results!!!")
+    # print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
+    print(f"Predicted remaining years of life: {(predicted_lifespan-A0):.2f}")
+    print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
+    # print(f"Final health index at age {age[-1]:.1f}: {H_sol[-1]:.2f}")
 
-y0 = np.array([R0, H0])
-sol = rk4_system(derivatives, y0, t)
-R_sol = sol[:,0]
-H_sol = sol[:,1]
-age = A0 + t
+    return [A0, predicted_lifespan-A0]
 
-# Remaining life expectancy estimate: when R approaches zero
-final_R = R_sol[-1]
-predicted_lifespan = A0 + R0 - final_R  # or simply A0 + t_end if you want max simulated age
-
-# Print results
-print("\n--- Simulation Results ---")
-# print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
-print(f"Predicted remaining years of life: {(predicted_lifespan-A0):.2f}")
-print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
-# print(f"Final health index at age {age[-1]:.1f}: {H_sol[-1]:.2f}")
+if __name__ == "__main__":
+    # AGE = age()[0] # current age
+    REMAINING = age()[1] # estimated remaining years of survival
