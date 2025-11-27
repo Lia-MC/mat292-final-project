@@ -1,21 +1,17 @@
-# graphs.py
 import numpy as np
 import matplotlib.pyplot as plt
 import model
 
 
-# =============== 1. HEALTH DECAY: TIME SERIES + BIFURCATION ===============
-
+# 1. health decay: time series graph
 def plot_health_time_series_and_phase(user_inputs):
-    """
-    Health decay – Time series + coupled phase portrait (H vs R).
-    """
+    # run model for individual risks
     indiv = model.run_individual_model(user_inputs)
     t = indiv["t"]
     R = indiv["R_t"]
     H = indiv["H_t"]
 
-    # Time series: H(t) and R(t)
+    # generate the time series graph: H(t) and R(t)
     plt.figure()
     plt.plot(t, H, label="H(t): Health index")
     plt.plot(t, R, label="R(t): Remaining years")
@@ -27,7 +23,7 @@ def plot_health_time_series_and_phase(user_inputs):
     plt.tight_layout()
     plt.show()
 
-    # Coupled model: Phase portrait H vs R
+    # generate the coupled model
     plt.figure()
     plt.plot(R, H)
     plt.xlabel("R (remaining years)")
@@ -39,14 +35,9 @@ def plot_health_time_series_and_phase(user_inputs):
 
     return indiv
 
-
+# plot the health bifurcation digram (as H -> infinity)
 def plot_health_bifurcation(user_inputs, param="s",
                             param_values=np.linspace(0.0, 1.0, 30)):
-    """
-    Health decay – 'bifurcation'-style plot:
-    vary parameter (s or a) and plot asymptotic H∞.
-    This is more like a parameter–steady-state diagram, which is what you want.
-    """
     H_inf_values = []
 
     for val in param_values:
@@ -59,22 +50,19 @@ def plot_health_bifurcation(user_inputs, param="s",
     plt.figure()
     plt.scatter(param_values, H_inf_values, s=15)
     plt.xlabel(param)
-    plt.ylabel("Asymptotic H (H∞)")
-    plt.title(f"Health 'Bifurcation' Diagram – Final H vs {param}")
+    plt.ylabel("Asymptotic H")
+    plt.title(f"Health Bifurcation Diagram: Final H vs {param}")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
 
 
-# ========= 2. ENVIRONMENT: BIFURCATION + PARAMETER-PLANE “PHASE PORTRAIT” =========
-
+# 2. environmental parameters bifurcation diagram and phase-plane
 def environment_bifurcation(country, base_inputs):
-    """
-    Environment – Bifurcation: vary β and see environmental_risk.
-    base_inputs should contain:
-      alpha, beta, gamma, delta1, delta2, delta3, delta4,
-      natural_disaster, temp_difference, drought_risk, population_density, Y0
-    """
+    # environmental_risk based on varied beta
+    # base_inputs contains: alpha, beta gamma, delta1, delta2, delta3, delta4, natural_disaster, temp_difference, drought_risk, population_density, Y0
+    # dep var is beta
+
     env_model = model.EnvironmentalRiskModel()
 
     betas = np.linspace(0.6, 0.8, 40)
@@ -107,13 +95,8 @@ def environment_bifurcation(country, base_inputs):
     plt.tight_layout()
     plt.show()
 
-
+# phase portrait for environment model: risk wrt gamma and beta
 def environment_phase_plane(country, base_inputs):
-    """
-    Environment – parameter-plane "phase portrait":
-    plot risk over (β, γ) plane as a contour plot.
-    Not a dynamical phase portrait, but a param-space portrait.
-    """
     env_model = model.EnvironmentalRiskModel()
 
     beta_vals = np.linspace(0.6, 0.8, 40)
@@ -152,15 +135,11 @@ def environment_phase_plane(country, base_inputs):
     plt.show()
 
 
-# ======= 3. EXTERNAL THREAT: SENSITIVITY + ANIMAL PHASE-PLANE =======
-
+# 3. external threat phase planes: sensititvity and animal threats
 def external_threat_sensitivity(country, years=50,
                                 homicide_rates=np.linspace(0.1, 20, 20),
                                 G=1.0, E=1.0):
-    """
-    External threat – Sensitivity: vary homicide rate H and see final V(years).
-    Uses HumanThreatModel ODE directly.
-    """
+    # vary homicide rate H and see final remaining # of years using HumanThreatModel ODE
     ht = model.HumanThreatModel()
     final_probs = []
 
@@ -185,14 +164,9 @@ def external_threat_sensitivity(country, years=50,
     plt.tight_layout()
     plt.show()
 
-
+# animal threat phase-plane: animal threat vs survival
 def animal_phase_plane(level="medium", time_span=50):
-    """
-    External threat – Animal phase-plane:
-    plot animal threat vs survival using AnimalThreatModel.
-    This directly gives you a phase-plane (y vs x).
-    """
-    at = model.AnimalThreatModel()
+    at = model.AnimalThreatModel() # run our model
 
     params = at.animal_parameters[level]
     a = params["a"]
@@ -217,8 +191,8 @@ def animal_phase_plane(level="medium", time_span=50):
         n_steps=1000,
     )
 
-    x = y[0]  # survival
-    z = y[1]  # animal threat level
+    x = y[0] # survival
+    z = y[1] # animal threat level
 
     plt.figure()
     plt.plot(x, z)
@@ -229,11 +203,8 @@ def animal_phase_plane(level="medium", time_span=50):
     plt.tight_layout()
     plt.show()
 
-
-# ========================== 4. DRIVER ==========================
-
 def main():
-    # Core individual inputs (you can change for a demo)
+    # core individual inputs (sample params)
     user_inputs = {
         "age": 29,
         "country": "Canada",
@@ -244,18 +215,16 @@ def main():
         "H0": 0.9,
     }
 
-    # 1) Health decay – time series + coupled phase portrait
+    # 1. health decay plots: time series and coupled phase portrait
     indiv = plot_health_time_series_and_phase(user_inputs)
 
-    # 1b) Health "bifurcation" – vary s or a
-    plot_health_bifurcation(user_inputs, param="s",
+    # 2. health bifurcation
+    plot_health_bifurcation(user_inputs, param="s", # can change to "a", "m", "H0" to see bifurcations for other params in model for individual risk!
                             param_values=np.linspace(0.0, 1.0, 25))
-    # You could also do param="a" to show effect of activity
 
-    # 2) Environment – we need some base environmental inputs
-    # For a real run, you could call get_environmental_risk_inputs(country)
-    # once, then reuse the returned values here. For now, you can plug in
-    # some numbers from a previous run or your report.
+    # 3. environmental risk bifurcation and phase-plane graphs
+
+    # sample parameters:
     country = "Canada"
     base_env_inputs = {
         "natural_disaster": 0.2,
@@ -275,7 +244,7 @@ def main():
     environment_bifurcation(country, base_env_inputs)
     environment_phase_plane(country, base_env_inputs)
 
-    # 3) External threat – sensitivity + animal phase-plane
+    # 4. external threat phase planes: sensitivity and animal threats
     external_threat_sensitivity(country, years=50,
                                 homicide_rates=np.linspace(0.1, 20, 20),
                                 G=1.0, E=1.0)
