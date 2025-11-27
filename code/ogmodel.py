@@ -7,19 +7,21 @@ load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
 
+# the LLM model!!!
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 import grpc
 import atexit
 
+# surpressing the warning aka bug fix
 @atexit.register
 def cleanup_grpc():
     try:
-        grpc._channel._shutdown_all()  # quietly close gRPC threads
+        grpc._channel._shutdown_all()
     except Exception:
         pass
 
-# surpressing the warning cuz i dont like to see it
+# surpressing the warning aka bug fix (again)
 os.environ["GRPC_VERBOSITY"] = "NONE"
 os.environ["GRPC_TRACE"] = ""
 import absl.logging
@@ -280,7 +282,7 @@ def age():
 
     Lmax = 0.0
     numcountries = 0
-    # Find corresponding Lmax values
+    # find corresponding Lmax values for each countries
     for idx in countryindex[1:]:
         if idx == 0:
             break
@@ -303,7 +305,7 @@ def age():
     if numbers_as_floats:
         s = numbers_as_floats[0]
     else:
-        s = 0.5
+        s = 0.5 # default
     print("s =", s)
 
     # activity levels
@@ -318,7 +320,7 @@ def age():
     if numbers_as_floats:
         a = numbers_as_floats[0]
     else:
-        a = 0.5
+        a = 0.5 # default
     print("a =", a)
 
     # WHR stuff
@@ -338,11 +340,13 @@ def age():
     if numbers_as_floats:
         m = numbers_as_floats[0]
     else:
-        m = 0.5
+        m = 0.5 # default
     print("m =", m)
 
+    # initial health index 
     # LLM COMPUTES THIS
-    # H0 = 0.9          # initial health index (0..1) 
+    # H0 = 0.9          
+    # h0 (0, 1) # pick value between these based on user inputs
     userh = input("Provide any additional information about your current health status: ")
     prompt = "ONLY OUTPUT A NUMBER CORRESPONDING TO H0, NO NUMBERS. Based on the following user overall assessment of their current health status, compute an initial health index between 0 and 1, where 0 means very poor health and 1 means excellent health: " + users + usera + userm + userh
     response = model.generate_content(prompt)
@@ -355,58 +359,55 @@ def age():
         H0 = 0.9 # default
     print("H0 =", H0)
 
-    # Parameters
-    A0 = curage         # current age
-    R0 = L_max - A0   # initial remaining years
+    # other parameters
+    A0 = curage # current age
+    R0 = L_max - A0 # initial remaining years
 
-    # baseline hazard at age A0 -> look it up
-    # Sort keys to make sure we can find the interval
+    # sort keys to make sure we can find interval
     keys = sorted(baseline_hazards.keys())
 
-    # If below the minimum or above the maximum, clamp
+    # quick algorithm to find h0 at age A0 via linear interpolation
     if A0 <= keys[0]:
         h0 = baseline_hazards[keys[0]]
     elif A0 >= keys[-1]:
         h0 = baseline_hazards[keys[-1]]
     else:
-        # Find the two nearest keys around A0
         for i in range(len(keys) - 1):
             x1, x2 = keys[i], keys[i + 1]
             if x1 <= A0 <= x2:
                 y1, y2 = baseline_hazards[x1], baseline_hazards[x2]
-                # Linear interpolation formula
+                # linear interpolation formula:
                 h0 = y1 + (A0 - x1) * (y2 - y1) / (x2 - x1)
                 break
 
-    # Health dynamics coefficients
-    # decay toward 0 if risk present; activity moves H toward 1
-    # calibrate based on data
+    # health dynamics coefficients
+    # calibrated based on data
     k_s = 1 # 0.5 to 5 
     k_a = 0.5 # 0.2 to 1
     k_w = 0.25 # 0.1 to 0.5
     k_m = 0.5 # 0.2 to 1
 
-    # Gompertz hazard params
-    # calibrate based on data
-    k_g = 0.06          # rate hazard increases with age
+    # gompertz hazard params
+    # calibrated based on data
+    k_g = 0.06 # because rate hazard increases with age
 
     # sensitivity of mortality to poor health
-    # calibrate based on data
+    # calibrated based on data
     k_h = 2.0
 
-    # Define derivatives for the system y = [R, H]
+    # define derivatives for the system y = [R, H]
     def derivatives(y, t):
         R, H = y
         age = A0 + t
-        # health ODE: simple linear form pushing H down with risk, up with activity
+        # health ODE
         dH_dt = - (k_s * s + k_w * delta_w + k_m * m) * H + k_a * a * (1 - H)
-        # Gompertz hazard (age-dependent)
+        # gompertz hazard equation
         hazard = h0 * np.exp(k_g * (age - A0))
-        # R ODE: proportional to R times hazard, amplified when H is low
+        # R ODE
         dR_dt = - R * hazard * (1.0 + k_h * (1.0 - H))
         return np.array([dR_dt, dH_dt])
 
-    # RK4 integrator for systems
+    # RK4 algorithm for system of ODEs
     def rk4_system(f, y0, t):
         y = np.zeros((len(t), len(y0)))
         y[0,:] = y0
@@ -417,12 +418,12 @@ def age():
             k3 = f(y[i-1,:] + 0.5*dt*k2, t[i-1] + 0.5*dt)
             k4 = f(y[i-1,:] + dt*k3, t[i-1] + dt)
             y[i,:] = y[i-1,:] + (dt/6.0)*(k1 + 2*k2 + 2*k3 + k4)
-            y[i,1] = np.clip(y[i,1], 0.0, 1.0) # keep H within [0,1] and R nonnegative
+            y[i,1] = np.clip(y[i,1], 0.0, 1.0)
             y[i,0] = max(y[i,0], 0.0)
         return y
 
-    # Run simulation
-    t_end = 80.0  # years forward to simulate (e.g., up to age A0 + 80)
+    # run simulation
+    t_end = L_max # simulate up to max age user can be (based on earlier calculations of L_max)
     n_steps = 4000
     t = np.linspace(0.0, t_end, n_steps)
 
@@ -432,12 +433,12 @@ def age():
     H_sol = sol[:,1]
     age = A0 + t
 
-    # Remaining life expectancy estimate: when R approaches zero
+    # remaining life expectancy estimate: when R approaches zero
     final_R = R_sol[-1]
-    predicted_lifespan = A0 + R0 - final_R  # or simply A0 + t_end if you want max simulated age
+    predicted_lifespan = A0 + R0 - final_R
 
-    # Print results
-    print("\n--- Simulation Results ---")
+    # RESULTS (commented out some of the less relevant ones)
+    print("\nSimulation Results!!!")
     # print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
     print(f"Predicted remaining years of life: {(predicted_lifespan-A0):.2f}")
     print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
@@ -447,22 +448,22 @@ def age():
 
 class HumanThreatModel:
     def __init__(self):
-        # Removed gender and ethnicity multipliers since we're getting them via user input
+        # removed gender and ethnicity multipliers since we're getting them via user input
         pass
 
+    # calculate homicide rate 
     def get_homicide_rate(self, country):
-        """Get homicide rate per 100,000 for a country"""
         print("\nPlease go to: https://data.worldbank.org/indicator/VC.IHR.PSRC.P5")
         print(f"Find the homicide rate for {country} (per 100,000 people)")
         value = float(input("Enter the homicide rate: "))
         return value
 
+    # calculate human threat ODE based on inputs
     def human_threat_ode(self, V, t, lambda_base):
-        """ODE for cumulative probability of being a homicide victim"""
         return lambda_base * (1 - V)
 
+    # RK4 algorithm for single ODE
     def runge_kutta_4(self, f, y0, t_span, args, n_steps=1000):
-        """4th Order Runge-Kutta method"""
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
@@ -478,38 +479,34 @@ class HumanThreatModel:
 
         return t, y
 
+    # get multipliers via user input for gender and ethnicity
     def get_user_multipliers(self):
-        """Get gender and ethnicity multipliers from user input"""
-        print("\n=== Gender Multiplier ===")
+        # gender multiplier
         G = float(input("Enter one of the following numbers for gender:\n"
                         "if female: 1\nif male: 4\nif other or non-conforming: 5\n"
                         "Your choice: "))
 
-        print("\n=== Ethnicity Multiplier ===")
+        # ethnicity multiplier
         E = float(input("Enter one of the following numbers for ethnicity:\n"
                         "if black: 10\nif white: 8.75\nif hispanic: 5.5\nif other: 4\n"
                         "Your choice: "))
 
         return G, E
 
-    def calculate_human_threat(self, years, country, n_steps=1000):      # i think done ################################################################################### Connect to years to R pls
-        """
-        Calculate cumulative homicide probability using Runge-Kutta
-        """
+    # human threat risk factor calculation using above functions!
+    def calculate_human_threat(self, years, country, n_steps=1000):
 
-        # Get user multipliers
+        # get necessary parameters/variables
         G, E = self.get_user_multipliers()
-
-        # Get homicide rate
         H = self.get_homicide_rate(country)
-        lambda_base = (H / 100000) * G * E  # Combine all multipliers
+        lambda_base = (H / 100000) * G * E
 
-        # Solve ODE using Runge-Kutta
+        # call rk4 solver
         t, V = self.runge_kutta_4(
             self.human_threat_ode,
-            y0=0.0,  # Initial V(0) = 0
+            y0=0.0,
             t_span=(0, years),
-            args=(lambda_base,),  # Only pass lambda_base now
+            args=(lambda_base,),
             n_steps=n_steps
         )
 
@@ -517,18 +514,18 @@ class HumanThreatModel:
 
 class AnimalThreatModel:
     def __init__(self):
-        # FIXED parameters
+        # FIXED parameters based on data calibration
         self.animal_parameters = {
             'low': {'a': 0.3, 'b': 0.2, 'c': 0.5, 'd': 0.05},
             'medium': {'a': 1.0, 'b': 0.3, 'c': 0.2, 'd': 0.3},
             'high': {'a': 2.0, 'b': 0.2, 'c': 0.08, 'd': 1.2}
         }
 
-        # Pre-calculate maximum threat levels for each predator type
+        # pre-calculate max threat levels for each predator type
         self.max_threat_levels = self._calculate_max_threat_levels()
 
+    # calculate maximum possible threat levels for each predator type
     def _calculate_max_threat_levels(self):
-        """Calculate maximum possible threat levels for each predator type"""
         max_levels = {}
         for level, params in self.animal_parameters.items():
             a, b, c, d = params['a'], params['b'], params['c'], params['d']
@@ -536,8 +533,8 @@ class AnimalThreatModel:
             max_levels[level] = max_threat
         return max_levels
 
+    # using rk4 solve for the max threat parameter
     def _find_actual_max_threat(self, a, b, c, d, time_span=200, n_steps=2000):
-        """Find the actual maximum threat level by running a long simulation"""
         y0 = np.array([1.0, 0.1])
 
         t, y = self.runge_kutta_4_system(
@@ -550,15 +547,15 @@ class AnimalThreatModel:
 
         return np.max(y[1])
 
+    # lokta-volterra ODE system for animal threat param
     def animal_threat_ode(self, variables, t, a, b, c, d):
-        """Lotka-Volterra ODE system for animal threat"""
-        x, y = variables  # x: survival probability, y: animal threat level
+        x, y = variables # x: survival probability, y: animal threat level
         dxdt = a * x - b * x * y
         dydt = -c * y + d * x * y
         return np.array([dxdt, dydt])
 
+    # rk4 system solver for animal threat
     def runge_kutta_4_system(self, f, y0, t_span, args, n_steps=1000):
-        """4th Order Runge-Kutta for systems of ODEs"""
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
@@ -574,9 +571,9 @@ class AnimalThreatModel:
 
         return t, y
 
+    # get predator level info based on user input
     def get_predator_level_from_user(self):
-        """Get predator level from user input"""
-        print("\n=== Animal Threat Assessment ===")
+        print("\nAnimal Threat Assessment")
         print("Choose the predator intensity in your environment:")
         print("1. Low - Small animals (squirrels, rabbits)")
         print("2. Medium - Medium predators (foxes, coyotes)")
@@ -591,33 +588,30 @@ class AnimalThreatModel:
             elif choice == '3':
                 return 'high'
             else:
-                print("Invalid choice! Please enter 1, 2, or 3")
+                print("Invalid choice! Enter 1, 2, or 3")
 
-    def calculate_animal_threat(self, time_span, predator_level=None, initial_survival=1.0, n_steps=1000): # i think done ########################################################## Connect to time_span to R pls
-        """
-        Calculate animal threat seriousness using Runge-Kutta
-        """
-        # Get predator level from user if not provided
+    # calculate animal threat seriousness
+    def calculate_animal_threat(self, time_span, predator_level=None, initial_survival=1.0, n_steps=1000):
         if predator_level is None:
             predator_level = self.get_predator_level_from_user()
 
-        # Set initial threat based on predator level
+        # set initial threat score based on predator level
         if predator_level == 'low':
             initial_threat = 0.01
         elif predator_level == 'medium':
             initial_threat = 0.1
-        else:  # high
-            initial_threat = 0.3
+        else:
+            initial_threat = 0.3 # high
 
-        # Get parameters and max threat level
+        # get parameters and max threat level
         params = self.animal_parameters[predator_level]
         max_threat = self.max_threat_levels[predator_level]
         a, b, c, d = params['a'], params['b'], params['c'], params['d']
 
-        # Initial conditions
+        # initial conditions
         y0 = np.array([initial_survival, initial_threat])
 
-        # Solve ODE system
+        # solve ODE system by calling rk4
         t, y = self.runge_kutta_4_system(
             self.animal_threat_ode,
             y0=y0,
@@ -629,64 +623,61 @@ class AnimalThreatModel:
         threat_levels = y[1]
         avg_threat = np.mean(threat_levels)
 
-        # Use predator-specific maximums for scaling, but map to the appropriate third
+        # ratio for scaling for predator-specific maximums, map to the appropriate third
         ratio = avg_threat / max_threat if max_threat > 0 else 0.0
 
-        # Map each predator type to its designated third of the seriousness scale
+        # map each predator type to its designated third of the seriousness scale
         if predator_level == 'low':
-            # Low predators: 0-33.3% range
+            # low risk predators: 0-33.3% range
             seriousness_score = ratio * 0.333
         elif predator_level == 'medium':
-            # Medium predators: 33.3-66.7% range
+            # medium risk predators: 33.3-66.7% range
             seriousness_score = 0.333 + (ratio * 0.334)
         else:  # high
-            # High predators: 66.7-100% range
+            # high risk predators: 66.7-100% range
             seriousness_score = 0.667 + (ratio * 0.333)
 
-        # Ensure we stay within bounds
+        # ensure we stay within bounds
         seriousness_score = min(1.0, max(0.0, seriousness_score))
 
         return seriousness_score, predator_level, initial_threat, max_threat, avg_threat
 
 
-def analyze_external_threats(years, country): # i think done ################################################################################################################################################ Connect years to R pls
+def analyze_external_threats(years, country):
     """Combine both threat models for comprehensive analysis"""
 
     human_model = HumanThreatModel()
     animal_model = AnimalThreatModel()
 
-    # Human threat analysis - now handles its own user input
+    # run human threat analysis
     human_time, human_risk, country = human_model.calculate_human_threat(years=years, country=country)
 
-    # Animal threat analysis - now handles its own user input and returns seriousness score
+    # run animal threat analysis
     animal_seriousness, animal_level, initial_threat, max_threat, avg_threat = animal_model.calculate_animal_threat(
         time_span=years)
 
-    # Convert animal seriousness to risk (seriousness score is already 0-1 scale representing threat level)
     animal_risk = animal_seriousness
 
-    # Combine results - weighted combination (you can adjust weights as needed)
-    # Human risk is probability of homicide, animal risk is threat seriousness
+    # weighted combination 
+    # weights calibrated based on data
     combined_risk = 0.5 * human_risk[-1] + 0.5 * animal_risk
 
     return {
         'country': country,
-        'human_risk': human_risk[-1],  # Final cumulative probability
+        'human_risk': human_risk[-1],  # final cumulative probability
         'animal_risk': animal_risk,
         'animal_level': animal_level,
         'combined_risk': combined_risk,
         'time_points': human_time,
         'human_risk_over_time': human_risk
     }
-
+# resource availability scores
 def resource_availability():
-    """Get resource availability scores from user input"""
-    print("\n=== Resource Availability Assessment ===")
-    print("Please answer the following questions about your resources:\n")
+    print("\nResource Availability Assessment")
 
     scores = {}
 
-    # Water availability
+    # water availability
     print("1. Do you have drinkable water available to you?")
     print("   [1] Always (7 days a week)")
     print("   [2] Most days (5-6 days a week)")
@@ -709,7 +700,7 @@ def resource_availability():
         print("   Invalid choice, defaulting to 'Always'")
         scores['water'] = 1.0
 
-    # Food availability
+    # food availability
     print("\n2. Do you have food available to you?")
     print("   [1] Always (7 days a week)")
     print("   [2] Most days (5-6 days a week)")
@@ -732,7 +723,7 @@ def resource_availability():
         print("   Invalid choice, defaulting to 'Always'")
         scores['food'] = 1.0
 
-    # Medical availability
+    # medical availability
     print("\n3. Do you have medical attention/hospitals near you?")
     print("   [1] Very close (< 10 km)")
     print("   [2] Close (10-30 km)")
@@ -755,7 +746,7 @@ def resource_availability():
         print("   Invalid choice, defaulting to 'Very close'")
         scores['medical'] = 1.0
 
-    # Shelter availability
+    # shelter availability
     print("\n4. Do you have shelter available (anywhere to sleep)?")
     print("   [1] Always (7 days a week)")
     print("   [2] Most days (5-6 days a week)")
@@ -778,7 +769,7 @@ def resource_availability():
         print("   Invalid choice, defaulting to 'Always'")
         scores['shelter'] = 1.0
 
-    # Economic situation
+    # economic situation
     print("\n5. How's your economic situation?")
     print("   [1] Comfortable")
     print("   [2] Tight")
@@ -795,17 +786,18 @@ def resource_availability():
         print("   Invalid choice, defaulting to 'Comfortable'")
         scores['economic'] = 1.0
 
-    # Calculate overall score
+    # calculate overall score
     scores['overall'] = sum(scores.values()) / len(scores)
 
     return scores
 
+# environmental risk calculator model
 class EnvironmentalRiskModel:
     global model
     def calculate_normalized_risk(self, country, alpha, beta, gamma, delta1, natural_disaster, delta2, temp_difference, delta3,
                                   drought_risk, delta4, population_density, Y0):
         lambda_prev = Y0
-        # Stabilize through iterations
+
         for _ in range(10):
             lambda_current = (alpha +
                               beta * Y0 +
@@ -816,20 +808,20 @@ class EnvironmentalRiskModel:
                               delta4 * population_density)
             lambda_prev = lambda_current
 
-        # Calculate maximum possible risk (worst-case scenario)
+        # calculate max possible risk (to see like the worst-case scenario)
         max_alpha = 0.5
         max_beta = 0.8
         max_gamma = 0.4
         max_delta = 0.01
 
-        # Worst-case inputs (all at maximum risk)
+        # worst-case inputs (aka all at maximum risk)
         max_natural_disaster = 1.0  # 100% disaster risk
-        max_temp_difference = 5.0  # Maximum temperature anomaly
-        max_drought_risk = 5.0  # Maximum drought risk score (0-5 scale)
+        max_temp_difference = 5.0  # maximum temperature anomaly
+        max_drought_risk = 5.0  # maximum drought risk score (0-5 scale)
         max_population_density = 22000.0  # Macau's density (~22,000 people/km²) --> Highest population density source: wikipedia
         
+        # Initial disaster frequency
         # LLM COMPUTES THIS
-        # max_Y0 = 10.0  # High initial disaster frequency ############################################################################################################################### Ask AI to get this prompt below, change that 10 to the actual number
         prompt =  ''' For max_Y0
         Estimate the highest monthly frequency of natural disasters in {country}. 
         Consider disasters like: earthquakes, floods, hurricanes, wildfires.
@@ -846,7 +838,7 @@ class EnvironmentalRiskModel:
             max_Y0 = 10.0 # default
         print("max_Y0 =", max_Y0)
 
-        # Calculate maximum possible risk
+        # calculate maximum possible risk
         lambda_prev_max = max_Y0
         for _ in range(10):
             lambda_current_max = (max_alpha +
@@ -858,14 +850,14 @@ class EnvironmentalRiskModel:
                                   max_delta * max_population_density)
             lambda_prev_max = lambda_current_max
 
-        # Normalize to 0-1 range
+        # normalize to 0-1 range
         normalized_risk = max(0, min(1, lambda_current / lambda_current_max))
 
         return normalized_risk
 
+# calculate normalized environmental risk based on user inputs
 def get_environmental_risk_inputs(country):
-    """Get all environmental risk inputs from user and calculate normalized risk (0-1)"""
-    print("=== ENVIRONMENTAL RISK ASSESSMENT ===")
+    print("ENVIRONMENTAL RISK ASSESSMENT")
 
     print(f"\nFor {country}, please provide the following risk factors:")
     natural_disaster = float(input("Natural disaster risk at https://worldpopulationreview.com/country-rankings/natural-disaster-risk-by-country (0 to 100): ")) / 100
@@ -873,7 +865,8 @@ def get_environmental_risk_inputs(country):
     drought_risk = float(input("Drought risk score at https://worldpopulationreview.com/country-rankings/droughts-by-country (0 to 5): "))
     population_density = float(input("Population density per km^2 (first column) at https://worldpopulationreview.com/country-rankings/countries-by-density: "))
 
-    ############################################################################################################################################################################################################### Get AI to pick alpha, beta, gamma, delta1, delta2, delta3, delta4, and Y0. Later delete the section that uses user input here (it's just for testing)
+    # LLM generates appropriate alpha, beta, gamma, delta1, delta2, delta3, delta4, and Y0 based on user info
+    
     # LLM COMPUTES THIS
     # Y0         
     prompt = f"""
@@ -1035,46 +1028,7 @@ def get_environmental_risk_inputs(country):
         delta4 = 0.0055 # default for all deltas
     print("delta4 =", delta4)
 
-    # '''
-    # Prompts (2 prompts):  ********************************************************************************************Note that both prompts you need to input the country
-    # 1) For y0 
-    # prompt = f"""
-    #     Estimate the average monthly frequency of natural disasters in {country}. 
-    #     Consider disasters like: earthquakes, floods, hurricanes, wildfires.
-    #     Return ONLY a single decimal number representing average events per month.
-    #     Base this on historical data and geographical risk factors.
-
-    #     Examples:
-    #     Japan (high seismic+typhoon risk): 1.8-2.2
-    #     Philippines (high typhoon risk): 2.0-2.5  
-    #     USA (varied regional risks): 1.2-1.6
-    #     UK (low disaster risk): 0.3-0.6
-
-    #     Country: {country}
-    #     Answer: """
-    #     ############### Last two lines to but the answer Ig, I don't really know how that works
-
-    # 2) For the parameters (alpha, beta, gamma, and all deltas) ***********************************************************note that country is the selected country
-    # Pick numerical values for the following parameters that work in the following {country}: Alpha between 0.1 and 0.5 
-    # and it's the baseline safety (i.e. safety when nothing else is happening), for beta between 0.6 and 0.8 and it's 
-    # recent disasters event (i.e. how much last month’s disasters affect this month’s) for gamma between 0.2 and 0.4 and 
-    # it's persistent risk memory (i.e. how much the risk persists over time) for all deltas between 0.001 - 0.01, which 
-    # are for how external factors affect and they are: delta1 --> natural disaster risk factor per country, delta2 --> the 
-    # difference between today’s temperature and the long term average for ocean, delta3 --> the drought risk score, 
-    # delta4 --> population density per country. This is all to model natural disaster risk
-    # '''
-
-    # print(f"\nFor {country}, please provide the model parameters:")
-    # alpha = float(input("Alpha (baseline safety 0.1-0.5): "))
-    # beta = float(input("Beta (recent disasters effect 0.6-0.8): "))
-    # gamma = float(input("Gamma (persistent risk memory 0.2-0.4): "))
-    # delta1 = float(input("Delta1 (natural disaster weight 0.001-0.01): "))
-    # delta2 = float(input("Delta2 (temperature weight 0.001-0.01): "))
-    # delta3 = float(input("Delta3 (drought weight 0.001-0.01): "))
-    # delta4 = float(input("Delta4 (population density weight 0.001-0.01): "))
-    # Y0 = float(input("Initial disaster frequency (Y0): "))
-
-        # Calculate normalized risk — do NOT shadow the LLM client name `model`
+    # calculate normalized risk
     env_model = EnvironmentalRiskModel()
     normalized_risk = env_model.calculate_normalized_risk(
         country, alpha, beta, gamma,
@@ -1082,8 +1036,6 @@ def get_environmental_risk_inputs(country):
         delta3, drought_risk, delta4, population_density, Y0
     )
 
-
-    # Return both the normalized risk and all inputs for reference
     return {
         'environmental_risk': normalized_risk,  # Between 0 and 1
         'country': country,
@@ -1111,71 +1063,64 @@ def calculate_total_survival(external_combined_risk, resource_scores, environmen
     k: steepness of the environmental risk transition
     """
 
-    # 1. External threats survival (inverse of combined human + animal risk)
+    # external threats survival (inverse of combined human + animal risk)
     S_external = 1 - external_combined_risk
 
-    # 2. Resource availability with weighted importance
+    # resource availability with weighted importance
     resource_weights = {
-        'water': 0.30,      # 30%
-        'food': 0.25,       # 25% 
-        'medical': 0.15,    # 15%
-        'shelter': 0.20,    # 20%
-        'economic': 0.10    # 10%
+        'water': 0.30, # 30%
+        'food': 0.25, # 25% 
+        'medical': 0.15, # 15%
+        'shelter': 0.20, # 20%
+        'economic': 0.10 # 10%
     }
 
-    # Calculate weighted resource score
+    # calculate weighted resource score
     weighted_resource_sum = 0
     for resource, weight in resource_weights.items():
         weighted_resource_sum += resource_scores[resource] * weight
 
-    # Normalize from [-1, +1] range to [0, 1] range
+    # normalize from [-1, +1] range to [0, 1] range
     S_resources = max(0, min(1, (weighted_resource_sum + 1) / 2))
 
-    # 3. Environmental risk survival
+    # environmental risk survival
     S_environment = 1 / (1 + np.exp(k * (environmental_risk - risk_threshold)))
 
-    # 4. Weighted SUM (additive instead of multiplicative)
+    # weighted SUM (additive instead of multiplicative)
     total_survival = (weights[0] * S_external +
                       weights[1] * S_resources +
                       weights[2] * S_environment)
 
-    # Ensure result is between 0 and 1
+    # wnsure result is between 0 and 1
     return max(0, min(1, total_survival))
 
 
-# Complete analysis function
+# complete analysis function
 def run_complete_survival_analysis(REMAINING):
-    """
-    Complete survival analysis integrating all models
-    """
-    print("=== COMPREHENSIVE SURVIVAL PROBABILITY ANALYSIS ===\n")
+    print("COMPREHENSIVE SURVIVAL PROBABILITY ANALYSIS\n")
 
-    # 0. Get country
     country = input("\nEnter your country: ")
 
-    # 1. Get combined external threats (human + animal)
-    print("Step 1: External Threat Assessment")
-    external_results = analyze_external_threats(years=REMAINING, country=country) ###################################################################################################################################### Update years to R pls
-    combined_external_risk = external_results['combined_risk']  # Use the combined risk
+    # get combined external threats (human + animal)
+    external_results = analyze_external_threats(years=REMAINING, country=country)
+    combined_external_risk = external_results['combined_risk']  # use combined risk
 
-    # 2. Get resource availability
-    print("\nStep 2: Resource Availability Assessment")
+    # get resource availability
     resource_scores = resource_availability()
 
-    # 3. Get environmental risk
-    print("\nStep 3: Environmental Risk Assessment")
+    # get environmental risk
     environmental_data = get_environmental_risk_inputs(country)
     environmental_risk = environmental_data['environmental_risk']
 
-    # 4. Calculate total survival probability
+    # calculate total survival probability
     total_survival = calculate_total_survival(
         external_combined_risk=combined_external_risk,
         resource_scores=resource_scores,
         environmental_risk=environmental_risk
     )
 
-    # 5. Display comprehensive results
-    print(f"\n=== FINAL SURVIVAL PROBABILITY RESULTS ===")
+    # display comprehensive results
+    print(f"\nFINAL SURVIVAL PROBABILITY RESULTS!!!")
     print(f"Country: {external_results['country']}")
     print(f"Combined External Threat Risk: {combined_external_risk:.4f} ({combined_external_risk * 100:.1f}%)")
     print(f"  - Human Threat: {external_results['human_risk']:.4f}")
