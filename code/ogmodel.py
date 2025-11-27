@@ -304,6 +304,7 @@ def age():
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         s = numbers_as_floats[0]
+        s = max(0, min(s, 1))
     else:
         s = 0.5 # default
     print("s =", s)
@@ -319,6 +320,7 @@ def age():
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         a = numbers_as_floats[0]
+        a = max(0, min(a, 1))
     else:
         a = 0.5 # default
     print("a =", a)
@@ -339,6 +341,7 @@ def age():
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         m = numbers_as_floats[0]
+        m = max(0, min(m, 1))
     else:
         m = 0.5 # default
     print("m =", m)
@@ -355,6 +358,7 @@ def age():
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         H0 = numbers_as_floats[0]
+        H0 = max(0, min(H0, 1))
     else:
         H0 = 0.9 # default
     print("H0 =", H0)
@@ -642,10 +646,8 @@ class AnimalThreatModel:
 
         return seriousness_score, predator_level, initial_threat, max_threat, avg_threat
 
-
 def analyze_external_threats(years, country):
-    """Combine both threat models for comprehensive analysis"""
-
+    # combine both threat models for comprehensive analysis
     human_model = HumanThreatModel()
     animal_model = AnimalThreatModel()
 
@@ -664,7 +666,7 @@ def analyze_external_threats(years, country):
 
     return {
         'country': country,
-        'human_risk': human_risk[-1],  # final cumulative probability
+        'human_risk': human_risk[-1], # final cumulative probability
         'animal_risk': animal_risk,
         'animal_level': animal_level,
         'combined_risk': combined_risk,
@@ -815,10 +817,10 @@ class EnvironmentalRiskModel:
         max_delta = 0.01
 
         # worst-case inputs (aka all at maximum risk)
-        max_natural_disaster = 1.0  # 100% disaster risk
-        max_temp_difference = 5.0  # maximum temperature anomaly
-        max_drought_risk = 5.0  # maximum drought risk score (0-5 scale)
-        max_population_density = 22000.0  # Macau's density (~22,000 people/km²) --> Highest population density source: wikipedia
+        max_natural_disaster = 1.0 # 100% disaster risk
+        max_temp_difference = 5.0 # maximum temperature anomaly
+        max_drought_risk = 5.0 # maximum drought risk score (0-5 scale)
+        max_population_density = 22000.0 # Macau's density (~22,000 people/km²) --> Highest population density source: wikipedia
         
         # Initial disaster frequency
         # LLM COMPUTES THIS
@@ -834,6 +836,7 @@ class EnvironmentalRiskModel:
         numbers_as_floats = [float(s) for s in numbers_as_strings]
         if numbers_as_floats:
             max_Y0 = numbers_as_floats[0]
+            max_Y0 = min(max_Y0, 10)
         else:
             max_Y0 = 10.0 # default
         print("max_Y0 =", max_Y0)
@@ -889,6 +892,7 @@ def get_environmental_risk_inputs(country):
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         Y0 = numbers_as_floats[0]
+        Y0 = min(Y0, 10)
     else:
         Y0 = 3 # default
     print("Y0 =", Y0)
@@ -908,6 +912,7 @@ def get_environmental_risk_inputs(country):
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         alpha = numbers_as_floats[0]
+        alpha = max(0.1, min(alpha, 0.5))
     else:
         alpha = 0.3 # default
     print("alpha =", alpha)
@@ -927,6 +932,7 @@ def get_environmental_risk_inputs(country):
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         beta = numbers_as_floats[0]
+        beta = max(0.6, min(beta, 0.8))
     else:
         beta = 0.7 # default
     print("beta =", beta)
@@ -946,6 +952,7 @@ def get_environmental_risk_inputs(country):
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         gamma = numbers_as_floats[0]
+        gamma = max(0.2, min(gamma, 0.4))
     else:
         gamma = 0.3 # default
     print("gamma =", gamma)
@@ -966,6 +973,7 @@ def get_environmental_risk_inputs(country):
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         delta1 = numbers_as_floats[0]
+        delta1 = max(0.001, min(delta1, 0.01))
     else:
         delta1 = 0.0055 # default for all deltas
     print("delta1 =", delta1)
@@ -986,6 +994,7 @@ def get_environmental_risk_inputs(country):
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         delta2 = numbers_as_floats[0]
+        delta2 = max(0.001, min(delta2, 0.01))
     else:
         delta2 = 0.0055 # default for all deltas
     print("delta2 =", delta2)
@@ -1005,6 +1014,7 @@ def get_environmental_risk_inputs(country):
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         delta3 = numbers_as_floats[0]
+        delta3 = max(0.001, min(delta3, 0.01))
     else:
         delta3 = 0.0055 # default for all deltas
     print("delta3 =", delta3)
@@ -1024,6 +1034,7 @@ def get_environmental_risk_inputs(country):
     numbers_as_floats = [float(s) for s in numbers_as_strings]
     if numbers_as_floats:
         delta4 = numbers_as_floats[0]
+        delta4 = max(0.001, min(delta4, 0.01))
     else:
         delta4 = 0.0055 # default for all deltas
     print("delta4 =", delta4)
