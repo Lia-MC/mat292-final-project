@@ -438,7 +438,7 @@ def age():
     age = A0 + t
 
     # remaining life expectancy estimate: when R approaches zero
-    final_R = R_sol[-1]
+    final_R = max(0, R_sol[-1])
     predicted_lifespan = A0 + R0 - final_R
 
     # RESULTS (commented out some of the less relevant ones)
