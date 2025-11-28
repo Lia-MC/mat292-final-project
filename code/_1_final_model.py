@@ -464,7 +464,7 @@ class HumanThreatModel:
 
     # calculate human threat ODE based on inputs
     def human_threat_ode(self, V, t, lambda_base):
-        return lambda_base * (1 - V)
+        return lambda_base * max(0, (1 - V))
 
     # RK4 algorithm for single ODE
     def runge_kutta_4(self, f, y0, t_span, args, n_steps=1000):
@@ -653,12 +653,13 @@ def analyze_external_threats(years, country):
 
     # run human threat analysis
     human_time, human_risk, country = human_model.calculate_human_threat(years=years, country=country)
+    human_risk[-1] = max(0, human_risk[-1])
 
     # run animal threat analysis
     animal_seriousness, animal_level, initial_threat, max_threat, avg_threat = animal_model.calculate_animal_threat(
         time_span=years)
 
-    animal_risk = animal_seriousness
+    animal_risk = max(0, animal_seriousness)
 
     # weighted combination 
     # weights calibrated based on data
