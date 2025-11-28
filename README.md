@@ -9,22 +9,22 @@ To run or read any of our code, please first follow the steps below:
 4. Locally make a .env file and write GOOGLE_API_KEY = {fill this in with your API key, remove curly braces}
 5. Put the following command in your terminal: pip install -r requirements.txt
 
-(WARNING: If at any point there is an error that you have run out of API credits, please generate a new API key and rerun our program. We recomend generating a new API key for every run, to prevent it running out in the middle of a trial. It has happened several times before)
+(WARNING: If at any point there is an error that you have run out of API credits, please generate a new API key and rerun our program. We recomend generating a new API key for every run, to prevent it running out in the middle of a trial, as this has happened several times before.)
 
 
 To run our interactive model that generates the expected lifespan based on user input parameters, please follow the steps below:
-1. Navigate to code/ogmodel.py
-2. Run the code locally by inputting the following into your terminal: python ogmodel.py
+1. Navigate to code/_1_final_model.py
+2. Run the code locally by inputting the following into your terminal: python code/_1_final_model.py
 
 
 To generate the fractals, please follow the steps below: 
-1. Based on your desired fractal, navigate to code/fractal_julia_set.py OR code/fractal_mandelbrot_survival.py OR code/fractal_network.py OR code/fractal_survivalprob_vs_resources.py OR code/fractal_tree_of_survival_prob.py
-2. Run the code locally by inputting the following into your terminal: python [filename of whichever file you choose with the square brackets removed].py
+1. Based on your desired fractal, navigate to code/_4_fractal_julia_set.py OR code/_4_fractal_mandelbrot_survival.py OR code/_4_fractal_network.py OR code/_4_fractal_survivalprob_vs_resources.py OR code/_4_fractal_tree_of_survival_prob.py
+2. Run the code locally by inputting the following into your terminal: python code/[filename of whichever file you choose with the square brackets removed].py
 
 
 To generate the graphs, please follow the steps below: 
 1. Navigate to code/graphs.py
-2. Run the code locally by inputting the following into your terminal: python graphs.py
+2. Run the code locally by inputting the following into your terminal: python code/_4_graphs.py
 
 
 We hope you enjoy learning about your remaining life span!
