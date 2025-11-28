@@ -444,7 +444,7 @@ def age():
     # RESULTS (commented out some of the less relevant ones)
     print("\nSimulation Results!!!")
     # print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
-    print(f"Predicted remaining years of life: {(predicted_lifespan-A0):.2f}")
+    print(f"Predicted remaining years of life: {(final_R):.2f}")
     print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
     # print(f"Final health index at age {age[-1]:.1f}: {H_sol[-1]:.2f}")
 
