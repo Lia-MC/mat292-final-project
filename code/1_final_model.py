@@ -487,12 +487,12 @@ class HumanThreatModel:
     def get_user_multipliers(self):
         # gender multiplier
         G = float(input("Enter one of the following numbers for gender:\n"
-                        "if female: 1\nif male: 4\nif other or non-conforming: 5\n"
+                        "if female: 1\nif male: 3.51\nif other or non-conforming: 5\n"
                         "Your choice: "))
 
         # ethnicity multiplier
         E = float(input("Enter one of the following numbers for ethnicity:\n"
-                        "if black: 10\nif white: 8.75\nif hispanic: 5.5\nif other: 4\n"
+                        "if black: 7.94\nif white: 1.93\nif hispanic: 1.78\nif other: 1\n"
                         "Your choice: "))
 
         return G, E
