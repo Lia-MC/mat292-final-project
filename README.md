@@ -9,7 +9,7 @@ To run or read any of our code, please first follow the steps below:
 4. Locally make a .env file and write GOOGLE_API_KEY = {fill this in with your API key, remove curly braces}
 5. Put the following command in your terminal: pip install -r requirements.txt
 
-(WARNING: If at any point there is an error that you have run out of API credits, please generate a new API key and rerun our program. We recomend generating a new API key for every run, to prevent it running out in the middle of a trial.)
+(WARNING: If at any point there is an error that you have run out of API credits, please generate a new API key and rerun our program. We recomend generating a new API key for every run, to prevent it running out in the middle of a trial. It has happened several times before)
 
 
 To run our interactive model that generates the expected lifespan based on user input parameters, please follow the steps below:
