@@ -1110,7 +1110,7 @@ def calculate_total_survival(external_combined_risk, resource_scores, environmen
 def run_complete_survival_analysis(REMAINING):
     print("COMPREHENSIVE SURVIVAL PROBABILITY ANALYSIS\n")
 
-    country = input("\nEnter your country: ")
+    country = input("\nEnter the country you live in: ")
 
     # get combined external threats (human + animal)
     external_results = analyze_external_threats(years=REMAINING, country=country)
