@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import model
+import _4_model as model
 
 
 # 1. health decay: time series graph
