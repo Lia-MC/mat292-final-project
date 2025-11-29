@@ -411,19 +411,27 @@ def age():
         dR_dt = - R * hazard * (1.0 + k_h * (1.0 - H))
         return np.array([dR_dt, dH_dt])
 
-    # RK4 algorithm for system of ODEs
-    def rk4_system(f, y0, t):
+    # RK6 algorithm for system of ODEs
+    def rk6_system(f, y0, t):
         y = np.zeros((len(t), len(y0)))
-        y[0,:] = y0
+        y[0, :] = y0
+
         for i in range(1, len(t)):
             dt = t[i] - t[i-1]
-            k1 = f(y[i-1,:], t[i-1])
-            k2 = f(y[i-1,:] + 0.5*dt*k1, t[i-1] + 0.5*dt)
-            k3 = f(y[i-1,:] + 0.5*dt*k2, t[i-1] + 0.5*dt)
-            k4 = f(y[i-1,:] + dt*k3, t[i-1] + dt)
-            y[i,:] = y[i-1,:] + (dt/6.0)*(k1 + 2*k2 + 2*k3 + k4)
-            y[i,1] = np.clip(y[i,1], 0.0, 1.0)
-            y[i,0] = max(y[i,0], 0.0)
+            ti = t[i-1]
+            yi = y[i-1, :]
+
+            k1 = dt * f(yi, ti)
+            k2 = dt * f(yi + k1/3, ti + dt/3)
+            k3 = dt * f(yi + (2/3)*k2, ti + 2*dt/3)
+            k4 = dt * f(yi + (1/12)*(k1 + 4*k2 - k3), ti + dt/3)
+            k5 = dt * f(yi + (25/48)*k1 - (55/24)*k2 + (35/48)*k3 + (15/8)*k4, ti + dt/2)
+            k6 = dt * f(yi + (3/20)*k1 + (1/4)*k2 + (1/5)*k3 + (1/4)*k4 + (3/20)*k5, ti + dt)
+
+            y[i, :] = yi + (1/90)*(7*k1 + 32*k3 + 12*k4 + 32*k5 + 7*k6)
+            y[i, 1] = np.clip(y[i, 1], 0.0, 1.0)
+            y[i, 0] = max(y[i, 0], 0.0)
+
         return y
 
     # run simulation
@@ -432,7 +440,7 @@ def age():
     t = np.linspace(0.0, t_end, n_steps)
 
     y0 = np.array([R0, H0])
-    sol = rk4_system(derivatives, y0, t)
+    sol = rk6_system(derivatives, y0, t)
     R_sol = sol[:,0]
     H_sol = sol[:,1]
     age = A0 + t
@@ -466,8 +474,8 @@ class HumanThreatModel:
     def human_threat_ode(self, V, t, lambda_base):
         return lambda_base * (1 - V)
 
-    # RK4 algorithm for single ODE
-    def runge_kutta_4(self, f, y0, t_span, args, n_steps=1000):
+    # RK6 algorithm for single ODE
+    def runge_kutta_6(self, f, y0, t_span, args, n_steps=1000):
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
@@ -475,11 +483,17 @@ class HumanThreatModel:
         y[0] = y0
 
         for i in range(n_steps):
-            k1 = h * f(y[i], t[i], *args)
-            k2 = h * f(y[i] + 0.5 * k1, t[i] + 0.5 * h, *args)
-            k3 = h * f(y[i] + 0.5 * k2, t[i] + 0.5 * h, *args)
-            k4 = h * f(y[i] + k3, t[i] + h, *args)
-            y[i + 1] = y[i] + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+            ti = t[i]
+            yi = y[i]
+
+            k1 = h * f(yi, ti, *args)
+            k2 = h * f(yi + k1/3, ti + h/3, *args)
+            k3 = h * f(yi + (2/3)*k2, ti + 2*h/3, *args)
+            k4 = h * f(yi + (1/12)*(k1 + 4*k2 - k3), ti + h/3, *args)
+            k5 = h * f(yi + (25/48)*k1 - (55/24)*k2 + (35/48)*k3 + (15/8)*k4, ti + h/2, *args)
+            k6 = h * f(yi + (3/20)*k1 + (1/4)*k2 + (1/5)*k3 + (1/4)*k4 + (3/20)*k5, ti + h, *args)
+
+            y[i+1] = yi + (1/90)*(7*k1 + 32*k3 + 12*k4 + 32*k5 + 7*k6)
 
         return t, y
 
@@ -505,8 +519,8 @@ class HumanThreatModel:
         H = self.get_homicide_rate(country)
         lambda_base = (H / 100000) * G * E
 
-        # call rk4 solver
-        t, V = self.runge_kutta_4(
+        # call rk6 solver
+        t, V = self.runge_kutta_6(
             self.human_threat_ode,
             y0=0.0,
             t_span=(0, years),
@@ -537,11 +551,11 @@ class AnimalThreatModel:
             max_levels[level] = max_threat
         return max_levels
 
-    # using rk4 solve for the max threat parameter
+    # using rk6 solve for the max threat parameter
     def _find_actual_max_threat(self, a, b, c, d, time_span=200, n_steps=2000):
         y0 = np.array([1.0, 0.1])
 
-        t, y = self.runge_kutta_4_system(
+        t, y = self.runge_kutta_6_system(
             self.animal_threat_ode,
             y0=y0,
             t_span=(0, time_span),
@@ -558,20 +572,27 @@ class AnimalThreatModel:
         dydt = -c * y + d * x * y
         return np.array([dxdt, dydt])
 
-    # rk4 system solver for animal threat
-    def runge_kutta_4_system(self, f, y0, t_span, args, n_steps=1000):
+    # rk6 system solver for animal threat
+    def runge_kutta_6_system(self, f, y0, t_span, args, n_steps=1000):
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
-        y = np.zeros((2, n_steps + 1))
+
+        y = np.zeros((len(y0), n_steps + 1))
         y[:, 0] = y0
 
         for i in range(n_steps):
-            k1 = h * f(y[:, i], t[i], *args)
-            k2 = h * f(y[:, i] + 0.5 * k1, t[i] + 0.5 * h, *args)
-            k3 = h * f(y[:, i] + 0.5 * k2, t[i] + 0.5 * h, *args)
-            k4 = h * f(y[:, i] + k3, t[i] + h, *args)
-            y[:, i + 1] = y[:, i] + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+            ti = t[i]
+            yi = y[:, i]
+
+            k1 = h * f(yi, ti, *args)
+            k2 = h * f(yi + k1/3, ti + h/3, *args)
+            k3 = h * f(yi + (2/3)*k2, ti + 2*h/3, *args)
+            k4 = h * f(yi + (1/12)*(k1 + 4*k2 - k3), ti + h/3, *args)
+            k5 = h * f(yi + (25/48)*k1 - (55/24)*k2 + (35/48)*k3 + (15/8)*k4, ti + h/2, *args)
+            k6 = h * f(yi + (3/20)*k1 + (1/4)*k2 + (1/5)*k3 + (1/4)*k4 + (3/20)*k5, ti + h, *args)
+
+            y[:, i+1] = yi + (1/90)*(7*k1 + 32*k3 + 12*k4 + 32*k5 + 7*k6)
 
         return t, y
 
@@ -615,8 +636,8 @@ class AnimalThreatModel:
         # initial conditions
         y0 = np.array([initial_survival, initial_threat])
 
-        # solve ODE system by calling rk4
-        t, y = self.runge_kutta_4_system(
+        # solve ODE system by calling rk6
+        t, y = self.runge_kutta_6_system(
             self.animal_threat_ode,
             y0=y0,
             t_span=(0, time_span),
