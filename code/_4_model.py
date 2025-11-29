@@ -386,10 +386,10 @@ def age():
 
     # health dynamics coefficients
     # calibrated based on data
-    k_s = 1 # 0.5 to 5 
-    k_a = 0.5 # 0.2 to 1
-    k_w = 0.25 # 0.1 to 0.5
-    k_m = 0.5 # 0.2 to 1
+    k_s = 3 # 0.5 to 5 
+    k_a = 0.7 # 0.2 to 1
+    k_w = 0.35 # 0.1 to 0.5
+    k_m = 0.7 # 0.2 to 1
 
     # gompertz hazard params
     # calibrated based on data
