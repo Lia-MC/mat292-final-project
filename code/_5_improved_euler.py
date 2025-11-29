@@ -411,22 +411,6 @@ def age():
         dR_dt = - R * hazard * (1.0 + k_h * (1.0 - H))
         return np.array([dR_dt, dH_dt])
 
-    # # RK4 algorithm for system of ODEs
-    # def rk4_system(f, y0, t):
-    #     y = np.zeros((len(t), len(y0)))
-    #     y[0,:] = y0
-    #     for i in range(1, len(t)):
-    #         dt = t[i] - t[i-1]
-    #         k1 = f(y[i-1,:], t[i-1])
-    #         k2 = f(y[i-1,:] + 0.5*dt*k1, t[i-1] + 0.5*dt)
-    #         k3 = f(y[i-1,:] + 0.5*dt*k2, t[i-1] + 0.5*dt)
-    #         k4 = f(y[i-1,:] + dt*k3, t[i-1] + dt)
-    #         y[i,:] = y[i-1,:] + (dt/6.0)*(k1 + 2*k2 + 2*k3 + k4)
-    #         y[i,1] = np.clip(y[i,1], 0.0, 1.0)
-    #         y[i,0] = max(y[i,0], 0.0)
-    #     return y
-
-    # run simulation
     t_end = L_max
     n_steps = 4000
     t = np.linspace(0.0, t_end, n_steps)
@@ -440,13 +424,13 @@ def age():
     age = A0 + t
 
     # remaining life expectancy estimate: when R approaches zero
-    final_R = R_sol[-1]
+    final_R = max(0, R_sol[-1])
     predicted_lifespan = A0 + R0 - final_R
 
     # RESULTS (commented out some of the less relevant ones)
     print("\nSimulation Results!!!")
     # print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
-    print(f"Predicted remaining years of life: {(predicted_lifespan-A0):.2f}")
+    print(f"Predicted remaining years of life: {(final_R):.2f}")
     print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
     # print(f"Final health index at age {age[-1]:.1f}: {H_sol[-1]:.2f}")
 
