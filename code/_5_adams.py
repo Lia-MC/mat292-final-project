@@ -459,19 +459,7 @@ def age():
     R_sol = sol[:,0]
     H_sol = sol[:,1]
     age = A0 + t
-
-    # # remaining life expectancy estimate: when R approaches zero
-    # final_R = max(0, R_sol[-1])
-    # predicted_lifespan = A0 + R0 - final_R
-
-    # # RESULTS (commented out some of the less relevant ones)
-    # print("\nSimulation Results!!!")
-    # # print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
-    # print(f"Predicted remaining years of life: {(final_R):.2f}")
-    # print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
-    # # print(f"Final health index at age {age[-1]:.1f}: {H_sol[-1]:.2f}")
-
-    age = A0 + t
+    
     death_index = np.where(R_sol <= 0.01)[0]
 
     if len(death_index) == 0:
