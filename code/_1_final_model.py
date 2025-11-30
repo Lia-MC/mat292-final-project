@@ -1,6 +1,6 @@
 import numpy as np
-import re
-import os
+import re # no need to pip install
+import os # no need to pip install
 import google.generativeai as genai
 from dotenv import load_dotenv
 load_dotenv()
@@ -11,7 +11,7 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 import grpc
-import atexit
+import atexit # no need to pip install
 
 # surpressing the warning aka bug fix
 @atexit.register
