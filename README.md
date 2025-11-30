@@ -17,7 +17,7 @@ To run our interactive model that generates the expected lifespan based on user 
 2. Run the code locally by inputting the following into your terminal: python code/_1_final_model.py
 - If you would like to run parts of our model (the individual risk portion or the environmental risk portion), please run the respective files by inputting into your terminal either python code/_2_individual.py or python code/_2_environmental.py
 - If the interactive model does not run on your laptop due to the lack of dependencies or other technical issues, please see our demo video:
-[![Watch the video](https://github.com/Lia-MC/mat292-final-project/thumbnail.png)](https://github.com/Lia-MC/mat292-final-project/Demo_video.mov)
+[![Watch the video](https://github.com/Lia-MC/mat292-final-project/thumbnail.png)](https://github.com/Lia-MC/mat292-final-project/Demo_video.mp4)
 - If you prefer to read a sample output of our interactive model, please feel free to read code/_5_sample_output.txt.
 
 
