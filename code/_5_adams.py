@@ -267,6 +267,40 @@ baseline_hazards = {
     108: 0.805
 }
 
+# adams 4th Order system
+def adams_system(f, y0, t):
+    y = np.zeros((len(t), len(y0)))
+    y[0, :] = y0
+
+    # euler for first 3 terms
+    for i in range(3):
+        dt = t[i+1] - t[i]
+        y[i+1, :] = y[i, :] + dt * f(y[i, :], t[i])
+
+        y[i+1, 1] = np.clip(y[i+1, 1], 0.0, 1.0)
+        y[i+1, 0] = max(y[i+1, 0], 0.0)
+
+    damping = 0.05 # 5% damping factor for increased stability of sols
+
+    # adams loop
+    for i in range(3, len(t)-1):
+        dt = t[i+1] - t[i]
+
+        f_n  = f(y[i, :],   t[i])
+        f_n1 = f(y[i-1, :], t[i-1])
+        f_n2 = f(y[i-2, :], t[i-2])
+        f_n3 = f(y[i-3, :], t[i-3])
+
+        y_calculated = y[i, :] + dt * (55*f_n - 59*f_n1 + 37*f_n2 - 9*f_n3) / 24
+
+        # apply damping
+        y[i+1, :] = y[i, :] + damping * (y_calculated - y[i, :])
+
+        y[i+1, 1] = np.clip(y[i+1, 1], 0.0, 1.0)
+        y[i+1, 0] = max(y[i+1, 0], 0.0)
+
+    return y
+
 def age():
     global model
     curage = int(input("What is your current age? "))
@@ -397,11 +431,14 @@ def age():
 
     # sensitivity of mortality to poor health
     # calibrated based on data
-    k_h = 2.0
+    k_h = 4
 
     # define derivatives for the system y = [R, H]
     def derivatives(y, t):
         R, H = y
+        R = max(R, 0.0)
+        H = np.clip(H, 0.0, 1.0)
+
         age = A0 + t
         # health ODE
         dH_dt = - (k_s * s + k_w * delta_w + k_m * m) * H + k_a * a * (1 - H)
@@ -423,14 +460,34 @@ def age():
     H_sol = sol[:,1]
     age = A0 + t
 
-    # remaining life expectancy estimate: when R approaches zero
-    final_R = max(0, R_sol[-1])
-    predicted_lifespan = A0 + R0 - final_R
+    # # remaining life expectancy estimate: when R approaches zero
+    # final_R = max(0, R_sol[-1])
+    # predicted_lifespan = A0 + R0 - final_R
+
+    # # RESULTS (commented out some of the less relevant ones)
+    # print("\nSimulation Results!!!")
+    # # print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
+    # print(f"Predicted remaining years of life: {(final_R):.2f}")
+    # print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
+    # # print(f"Final health index at age {age[-1]:.1f}: {H_sol[-1]:.2f}")
+
+    age = A0 + t
+    death_index = np.where(R_sol <= 0.01)[0]
+
+    if len(death_index) == 0:
+        predicted_lifespan = A0 + L_max
+        remaining_years = L_max
+    else:
+        death_idx = death_index[0]
+        predicted_lifespan = age[death_idx]
+        remaining_years = predicted_lifespan - A0
+
+    remaining_years = max(1.0, remaining_years)
 
     # RESULTS (commented out some of the less relevant ones)
     print("\nSimulation Results!!!")
     # print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
-    print(f"Predicted remaining years of life: {(final_R):.2f}")
+    print(f"Predicted remaining years of life: {(remaining_years):.2f}")
     print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
     # print(f"Final health index at age {age[-1]:.1f}: {H_sol[-1]:.2f}")
 
@@ -1166,35 +1223,3 @@ if __name__ == "__main__":
     results = run_complete_survival_analysis(REMAINING)
     tasdf = REMAINING * results['total_survival']
     print(f"\nEstimated Remaining Survival Years: {tasdf:.2f} years")
-
-
-# adams 4th Order system
-def adams_system(f, y0, t):
-    y = np.zeros((len(t), len(y0)))
-    y[0, :] = y0
-
-    # euler for first 3 terms
-    for i in range(3):
-        dt = t[i+1] - t[i]
-        y[i+1, :] = y[i, :] + dt * f(y[i, :], t[i])
-
-        y[i+1, 1] = np.clip(y[i+1, 1], 0.0, 1.0)
-        y[i+1, 0] = max(y[i+1, 0], 0.0)
-
-    # adams loop
-    for i in range(3, len(t)-1):
-        dt = t[i+1] - t[i]
-
-        f_n  = f(y[i, :],   t[i])
-        f_n1 = f(y[i-1, :], t[i-1])
-        f_n2 = f(y[i-2, :], t[i-2])
-        f_n3 = f(y[i-3, :], t[i-3])
-
-        y[i+1, :] = y[i, :] + dt * (
-            55*f_n - 59*f_n1 + 37*f_n2 - 9*f_n3
-        ) / 24
-
-        y[i+1, 1] = np.clip(y[i+1, 1], 0.0, 1.0)
-        y[i+1, 0] = max(y[i+1, 0], 0.0)
-
-    return y
