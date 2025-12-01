@@ -608,6 +608,8 @@ class HumanThreatModel:
 
     # bdf algo
     def bdf2(self, f, y0, t_span, args, n_steps=1000, tol=1e-10, max_iter=20):
+        start = time.perf_counter()
+            
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
@@ -641,6 +643,9 @@ class HumanThreatModel:
                     break
 
             y[i+1] = y_guess
+
+        end = time.perf_counter()
+        print(f"BDF2 SINGLE Runtime: {end - start:.6f} seconds")
 
         return t, y
 

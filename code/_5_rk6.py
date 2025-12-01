@@ -513,6 +513,8 @@ class HumanThreatModel:
 
     # RK6 algorithm for single ODE
     def runge_kutta_6(self, f, y0, t_span, args, n_steps=1000):
+        start = time.perf_counter()
+
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
@@ -531,7 +533,10 @@ class HumanThreatModel:
             k6 = h * f(yi + (3/20)*k1 + (1/4)*k2 + (1/5)*k3 + (1/4)*k4 + (3/20)*k5, ti + h, *args)
 
             y[i+1] = yi + (1/90)*(7*k1 + 32*k3 + 12*k4 + 32*k5 + 7*k6)
-
+            
+        end = time.perf_counter()
+        print(f"RK6 SINGLE Runtime: {end - start:.6f} seconds")
+        
         return t, y
 
     # get multipliers via user input for gender and ethnicity

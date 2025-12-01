@@ -534,6 +534,8 @@ class HumanThreatModel:
 
     # AB4 algorithm for single ODE
     def adams_bashforth_4(self, f, y0, t_span, args, n_steps=1000):
+        start = time.perf_counter()
+            
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
@@ -557,6 +559,9 @@ class HumanThreatModel:
             + 37*f_n2 
             - 9*f_n3
             ) / 24
+
+        end = time.perf_counter()
+        print(f"ADAMS SINGLE Runtime: {end - start:.6f} seconds")
 
         return t, y
 

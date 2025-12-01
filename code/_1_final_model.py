@@ -506,6 +506,8 @@ class HumanThreatModel:
 
     # RK4 algorithm for single ODE
     def runge_kutta_4(self, f, y0, t_span, args, n_steps=1000):
+        start = time.perf_counter()
+
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
@@ -518,6 +520,9 @@ class HumanThreatModel:
             k3 = h * f(y[i] + 0.5 * k2, t[i] + 0.5 * h, *args)
             k4 = h * f(y[i] + k3, t[i] + h, *args)
             y[i + 1] = y[i] + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+        end = time.perf_counter()
+        print(f"RK4 SINGLE Runtime: {end - start:.6f} seconds")            
 
         return t, y
 

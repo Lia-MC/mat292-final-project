@@ -505,6 +505,8 @@ class HumanThreatModel:
 
     # RK2 algorithm for single ODE
     def runge_kutta_2(self, f, y0, t_span, args, n_steps=1000):
+        start = time.perf_counter()
+
         t0, tf = t_span
         h = (tf - t0) / n_steps
         t = np.linspace(t0, tf, n_steps + 1)
@@ -516,6 +518,9 @@ class HumanThreatModel:
             k2 = f(y[i] + 0.5 * h * k1, t[i] + 0.5 * h, *args)
 
             y[i + 1] = y[i] + h * k2
+
+        end = time.perf_counter()
+        print(f"RK2 SINGLE Runtime: {end - start:.6f} seconds")
 
         return t, y
 
