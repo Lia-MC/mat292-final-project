@@ -2,6 +2,7 @@ import numpy as np
 import re # no need to pip install
 import os # no need to pip install
 import google.generativeai as genai
+import time
 from dotenv import load_dotenv
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
@@ -447,7 +448,7 @@ def age():
         return np.array([dR_dt, dH_dt])
 
     # RK4 algorithm for system of ODEs
-    def rk4_system(f, y0, t):
+    def rk4_system(f, y0, t):        
         y = np.zeros((len(t), len(y0)))
         y[0,:] = y0
         for i in range(1, len(t)):
@@ -458,7 +459,7 @@ def age():
             k4 = f(y[i-1,:] + dt*k3, t[i-1] + dt)
             y[i,:] = y[i-1,:] + (dt/6.0)*(k1 + 2*k2 + 2*k3 + k4)
             y[i,1] = np.clip(y[i,1], 0.0, 1.0)
-            y[i,0] = max(y[i,0], 0.0)
+            y[i,0] = max(y[i,0], 0.0) 
         return y
 
     # run simulation
@@ -467,7 +468,12 @@ def age():
     t = np.linspace(0.0, t_end, n_steps)
 
     y0 = np.array([R0, H0])
+
+    start = time.perf_counter()
     sol = rk4_system(derivatives, y0, t)
+    end = time.perf_counter()
+    print(f"RK4 SYSTEM Runtime: {end - start:.6f} seconds")
+
     R_sol = sol[:,0]
 
     # remaining life expectancy estimate: when R approaches zero

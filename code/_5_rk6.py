@@ -3,6 +3,7 @@ import re
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+import time
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
@@ -474,7 +475,12 @@ def age():
     t = np.linspace(0.0, t_end, n_steps)
 
     y0 = np.array([R0, H0])
+
+    start = time.perf_counter()
     sol = rk6_system(derivatives, y0, t)
+    end = time.perf_counter()
+    print(f"RK6 SYSTEM Runtime: {end - start:.6f} seconds")
+    
     R_sol = sol[:,0]
 
     # remaining life expectancy estimate: when R approaches zero

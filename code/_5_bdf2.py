@@ -2,6 +2,7 @@ import numpy as np
 import re
 import os
 import google.generativeai as genai
+import time
 from dotenv import load_dotenv
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
@@ -567,7 +568,12 @@ def age():
     t = np.linspace(0.0, t_end, n_steps)
 
     y0 = np.array([R0, H0])
+
+    start = time.perf_counter()
     sol = bdf2_system1(derivatives, y0, t)
+    end = time.perf_counter()
+    print(f"BDF2 SYSTEM Runtime: {end - start:.6f} seconds")
+
     R_sol = sol[:,0]
 
     # remaining life expectancy estimate: when R approaches zero

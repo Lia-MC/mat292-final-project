@@ -2,6 +2,7 @@ import numpy as np
 import re
 import os
 import google.generativeai as genai
+import time
 from dotenv import load_dotenv
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
@@ -488,7 +489,10 @@ def age():
 
     y0 = np.array([R0, H0])
 
+    start = time.perf_counter()
     sol = adams_system(derivatives, y0, t)
+    end = time.perf_counter()
+    print(f"ADAMS SYSTEM Runtime: {end - start:.6f} seconds")
 
     R_sol = sol[:,0]
     age = A0 + t
