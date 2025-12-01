@@ -25,6 +25,7 @@ os.environ["GRPC_TRACE"] = ""
 import absl.logging
 absl.logging.set_verbosity(absl.logging.ERROR)
 
+# data of countries and life expectancies
 countries = {
     "Done, no other countries to select": [0, 0.0],
     "Hong Kong": [1, 85.51],
