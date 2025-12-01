@@ -267,10 +267,7 @@ baseline_hazards = {
     108: 0.805
 }
 
-def age():
-    global model
-    curage = int(input("What is your current age? "))
-
+def getcountry():
     for country in countries:
         index = countries[country][0]
         print(f"{index}. {country}")
@@ -293,6 +290,9 @@ def age():
 
     L_max = Lmax / numcountries 
 
+    return L_max
+
+def get_s():
     # medical conditions severity
     # LLM COMPUTES THIS
     # s = (0, 1) # pick value between these based on user inputs
@@ -309,6 +309,9 @@ def age():
         s = 0.5 # default
     print("s =", s)
 
+    return s, users
+
+def get_a():
     # activity levels
     # LLM COMPUTES THIS
     # a = (0, 1) # pick value between these based on user inputs
@@ -325,11 +328,16 @@ def age():
         a = 0.5 # default
     print("a =", a)
 
-    # WHR stuff
+    return a, usera
+
+def get_whr():
+    # waist to hip ratio info
     w = float(input("Enter your waist to hip ratio: "))
     wopt = 0.875 # average optimal whr for all people
     delta_w = w - wopt
+    return delta_w
 
+def get_m():
     # metabolic risk score
     # LLM COMPUTES THIS
     # m = (0, 1) # pick value between these based on user inputs
@@ -346,6 +354,9 @@ def age():
         m = 0.5 # default
     print("m =", m)
 
+    return m, userm
+
+def get_H0(users, usera, userm):
     # initial health index 
     # LLM COMPUTES THIS
     # H0 = 0.9          
@@ -363,10 +374,9 @@ def age():
         H0 = 0.9 # default
     print("H0 =", H0)
 
-    # other parameters
-    A0 = curage # current age
-    R0 = L_max - A0 # initial remaining years
+    return H0
 
+def get_h0(A0):
     # sort keys to make sure we can find interval
     keys = sorted(baseline_hazards.keys())
 
@@ -383,6 +393,30 @@ def age():
                 # linear interpolation formula:
                 h0 = y1 + (A0 - x1) * (y2 - y1) / (x2 - x1)
                 break
+
+    return h0
+
+def age():
+    global model
+    curage = int(input("What is your current age? "))
+
+    L_max = getcountry()
+
+    s, users = get_s()
+
+    a, usera = get_a()
+
+    delta_w = get_whr()
+
+    m, userm = get_m()
+
+    H0 = get_H0(users, usera, userm)
+
+    # other parameters
+    A0 = curage # current age
+    R0 = L_max - A0 # initial remaining years
+
+    h0 = get_h0(A0)
 
     # health dynamics coefficients
     # calibrated based on data
@@ -411,19 +445,19 @@ def age():
         dR_dt = - R * hazard * (1.0 + k_h * (1.0 - H))
         return np.array([dR_dt, dH_dt])
 
-    # RK2 algorithm for system of ODEs
-    def rk2_system(f, y0, t):
+    # RK4 algorithm for system of ODEs
+    def rk4_system(f, y0, t):
         y = np.zeros((len(t), len(y0)))
-        y[0, :] = y0
-
+        y[0,:] = y0
         for i in range(1, len(t)):
-            dt = t[i] - t[i - 1]
-            k1 = f(y[i-1, :], t[i-1])
-            k2 = f(y[i-1, :] + 0.5 * dt * k1, t[i-1] + 0.5 * dt)
-            y[i, :] = y[i-1, :] + dt * k2
-            y[i, 1] = np.clip(y[i, 1], 0.0, 1.0)
-            y[i, 0] = max(y[i, 0], 0.0)
-
+            dt = t[i] - t[i-1]
+            k1 = f(y[i-1,:], t[i-1])
+            k2 = f(y[i-1,:] + 0.5*dt*k1, t[i-1] + 0.5*dt)
+            k3 = f(y[i-1,:] + 0.5*dt*k2, t[i-1] + 0.5*dt)
+            k4 = f(y[i-1,:] + dt*k3, t[i-1] + dt)
+            y[i,:] = y[i-1,:] + (dt/6.0)*(k1 + 2*k2 + 2*k3 + k4)
+            y[i,1] = np.clip(y[i,1], 0.0, 1.0)
+            y[i,0] = max(y[i,0], 0.0)
         return y
 
     # run simulation
@@ -432,22 +466,18 @@ def age():
     t = np.linspace(0.0, t_end, n_steps)
 
     y0 = np.array([R0, H0])
-    sol = rk2_system(derivatives, y0, t)
+    sol = rk4_system(derivatives, y0, t)
     R_sol = sol[:,0]
-    H_sol = sol[:,1]
-    age = A0 + t
 
     # remaining life expectancy estimate: when R approaches zero
     final_R = max(0, R_sol[-1])
     predicted_lifespan = A0 + R0 - final_R
     final_R = predicted_lifespan - A0
 
-    # RESULTS (commented out some of the less relevant ones)
+    # results
     print("\nSimulation Results!!!")
-    # print(f"Predicted remaining years of life: {R_sol[-1]:.2f}")
     print(f"Predicted remaining years of life: {(final_R):.2f}")
     print(f"Predicted total lifespan: {predicted_lifespan:.2f}")
-    # print(f"Final health index at age {age[-1]:.1f}: {H_sol[-1]:.2f}")
 
     return [A0, predicted_lifespan-A0]
 
