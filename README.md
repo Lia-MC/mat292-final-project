@@ -18,7 +18,8 @@ To run our interactive model that generates the expected lifespan based on user 
 - If you would like to run parts of our model (the individual risk portion or the environmental risk portion), please run the respective files by inputting into your terminal either python code/_2_individual.py or python code/_2_environmental.py
 - If you prefer to read a sample output of our interactive model, please feel free to read code/_5_sample_output.txt.
 - If the interactive model does not run on your laptop due to the lack of dependencies or other technical issues, please see our demo video:
-[![Demo Video!](https://img.youtube.com/vi/8Ze7asPSlRc/0.jpg)](https://www.youtube.com/watch?v=8Ze7asPSlRc)
+
+            [![Demo Video!](https://img.youtube.com/vi/8Ze7asPSlRc/0.jpg)](https://www.youtube.com/watch?v=8Ze7asPSlRc)
 
 To generate the fractals, please follow the steps below: 
 1. Based on your desired fractal, navigate to code/_4_fractal_julia_set.py OR code/_4_fractal_mandelbrot_survival.py OR code/_4_fractal_network.py OR code/_4_fractal_survivalprob_vs_resources.py OR code/_4_fractal_tree_of_survival_prob.py
