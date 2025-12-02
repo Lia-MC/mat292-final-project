@@ -11,19 +11,22 @@ def plot_health_time_series_and_phase(user_inputs):
     R = indiv["R_t"]
     H = indiv["H_t"]
 
+    # WE HAD DATA VERSUS FIT RIGHT HERE BEFORE AHHHHHHHHHHHHHHHH
+    plt.fit()
+
     # generate the coupled model
     plt.figure()
     plt.plot(R, H)
     plt.xlabel("R (remaining years)")
     plt.ylabel("H (health index)")
-    plt.title("Coupled Model Phase Portrait: H vs R")
+    # plt.title("Coupled Model Phase Portrait: H vs R")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
 
     return indiv
 
-# plot the health bifurcation digram (as H -> infinity)
+# 2. plot the health bifurcation digram (as H -> infinity)
 def plot_health_bifurcation(user_inputs, param="s",
                             param_values=np.linspace(0.0, 1.0, 30)):
     H_inf_values = []
