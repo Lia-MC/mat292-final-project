@@ -49,9 +49,9 @@ def plot_health_bifurcation(user_inputs, param="s",
 
     plt.figure()
     plt.scatter(param_values, H_inf_values, s=15)
-    plt.xlabel(param)
-    plt.ylabel("Asymptotic H")
-    plt.title(f"Health Bifurcation Diagram: Final H vs {param}")
+    plt.xlabel(param, fontsize=16)
+    plt.ylabel("H", fontsize=16)
+    # plt.title(f"Health Bifurcation Diagram: Final H vs {param}", fontsize=18)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
