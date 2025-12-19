@@ -22,13 +22,20 @@ To run our interactive model that generates the expected lifespan based on user 
 [![Demo Video!](https://img.youtube.com/vi/8Ze7asPSlRc/0.jpg)](https://www.youtube.com/watch?v=8Ze7asPSlRc)
 
 To generate the fractals, please follow the steps below: 
-1. Based on your desired fractal, navigate to code/_4_fractal_julia_set.py OR code/_4_fractal_mandelbrot_survival.py OR code/_4_fractal_network.py OR code/_4_fractal_survivalprob_vs_resources.py OR code/_4_fractal_tree_of_survival_prob.py
+1. Based on your desired fractal, navigate to code/_3_fractal_julia_set.py (Figure 3) OR code/_3_fractal_mandelbrot_survival.py OR code/_3_fractal_network.py OR code/_3_fractal_survivalprob_vs_resources.py OR code/_3_fractal_tree_of_survival_prob.py
 2. Run the code locally by inputting the following into your terminal: python code/[filename of whichever file you choose with the square brackets removed].py
 
+To run the code for different numerical solvers, please follow the steps below: 
+1. Navigate to the desired numerical solver file: code/_4_adams.py, code/_4_bdf2.py, code/_2_rk2.py, OR code/_6_rk6.py. Use code/_1_final_model.py for RK4 solver
+2. Run the code locally by inputting the following into your terminal: python code/[filename of whichever file you choose with the square brackets removed].py
 
-To generate other (non-fractal) graphs, please follow the steps below: 
-1. Navigate to code/graphs.py
-2. Run the code locally by inputting the following into your terminal: python code/_4_graphs.py
+To generate the graph of runtime comparisons (Figure 1), please follow the steps below: 
+1. Navigate to code/_5_graphing_trends.py
+2. Run the code locally by inputting the following into your terminal: python code/_6_graphing_trends.py
+
+To generate the graph of parameter comparisons (Figure 2), please follow the steps below: 
+1. Navigate to code/_5_graphing_trends.py
+2. Run the code locally by inputting the following into your terminal: python code/_6_graphing_trends.py
 
 
 The remaining folders and files document our progress. Please disregard these. There is no important information directly related to our final project, but we wanted to keep it for future reference.
