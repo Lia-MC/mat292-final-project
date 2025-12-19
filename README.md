@@ -22,22 +22,39 @@ To run or read any of our code, please first follow the steps below:
 
 ## File Organization
 _0_requirements.txt: Lists the dependencies that are not included in the default Python Library. Please install them as necessary.
+
 _1_final_model.py: This is our final lifespan predictor model with an RK4 solver.
+
 _2_environmental.py: This is the envionmental risk score calculator portion of our final model with an RK4 solver.
+
 _2_individual.py: This is the individual risk score calculator portion of our final model with an RK4 solver.
+
 _3_fractal_julia_set.py: Generates the Julia fractal modelling chaotic behaviour of the results dictated by the parameters.
+
 _3_fractal_mandelbrot.py: Generates a mandelbrot survival fractal representing chaotic behaviour of the results dictated by the parameters.
+
 _3_fractal_network.py: Generates a network diagram relating environmental parameters and their combined impact on survival probability.
+
 _3_fractal_survivalprob_vs_resources.py: Generates visual representation of impact of resources and external threat risks on survival probability.
+
 _3_fractal_tree_of_survival_prob.py: Generates visual tree representation of the chaotic behaviour of the impacts of parameters on the results.
+
 _4_adams.py: Adams-Bashforth of order 4 solver version of the model.
+
 _4_bdf2.py: Backward Differentiation Formula of order 2  solver version of the model.
+
 _4_rk2.py: 2nd order Runge-Kutta solver version of the model.
+
 _4_rk6.py: 4th order Runge-Kutta solver version of the model.
+
 _5_graphing_params.py: Graph of figure 1 from final report.
+
 _5_graphing_trends.py: Graph of figure 2 from final report.
+
 _5_model.py: Model compatible with the graphing files above.
+
 _6_sample_output.txt: Sample output of our model.
+
 _7_sample_output.txt: Another sample output of our model.
 
 ## Instructions to run files
