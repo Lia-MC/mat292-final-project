@@ -91,7 +91,7 @@ To generate the graph of parameter comparisons (Figure 2), please follow the ste
 ## Sample Outputs
 For sample outputs of the code from some of our previous runs, please read _6_sample_output.txt or _7_sample_output.txt.
 
-### Miscellaneous
+## Miscellaneous
 The remaining folders and files document our progress. Please disregard these. There is no important information directly related to our final project, but we wanted to keep it for future reference.
 
 We hope you enjoy learning about your remaining life span!
